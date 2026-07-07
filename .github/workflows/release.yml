@@ -34,5 +34,5 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
-          $files = Get-ChildItem dist -Include *.exe, *.blockmap, *.yml -Recurse | Select-Object -ExpandProperty FullName
+          $files = Get-ChildItem dist -File -Include "Matrix-UI-Heat-Transfer-*.exe", "Matrix-UI-Heat-Transfer-*.blockmap", "latest.yml" | Select-Object -ExpandProperty FullName
           gh release create $tag --title $tag --latest @files
