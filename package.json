@@ -1,6 +1,6 @@
 {
   "name": "heat-transfer-app",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Matrix UI Heat Transfer",
   "main": "main.js",
   "scripts": {
