@@ -1,6 +1,6 @@
 {
   "name": "heat-transfer-app",
-  "version": "1.3.4",
+  "version": "0.0.1",
   "description": "Matrix UI Heat Transfer",
   "main": "main.js",
   "scripts": {
@@ -76,7 +76,7 @@
     "nodeGypRebuild": false,
     "buildDependenciesFromSource": false,
     "win": {
-      "target": "nsis",
+      "target": "msi",
       "icon": "icon.ico",
       "artifactName": "Matrix-UI-Heat-Transfer-Setup-${version}.${ext}"
     }
