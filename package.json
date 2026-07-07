@@ -82,14 +82,17 @@
         { "target": "nsis", "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
       ],
-      "icon": "icon.ico",
-      "artifactName": "Matrix-UI-Heat-Transfer-${version}-${arch}.${ext}"
+      "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "Matrix-UI-Heat-Transfer-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Matrix-UI-Heat-Transfer-Portable-${version}-${arch}.${ext}"
     }
   }
 }

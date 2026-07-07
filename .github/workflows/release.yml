@@ -26,6 +26,13 @@ jobs:
         run: npm ci
 
       - name: Build Windows (NSIS installer + Portable)
+        run: npm run build-win -- --publish never
+
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build-win -- --publish always
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $files = Get-ChildItem dist -Include *.exe, *.blockmap, *.yml -Recurse | Select-Object -ExpandProperty FullName
+          gh release create $tag --title $tag --latest @files
