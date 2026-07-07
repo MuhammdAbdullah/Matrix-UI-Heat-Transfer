@@ -67,7 +67,7 @@ npm start
 - **Snapshot** — one click appends a single timestamped row to a CSV; path remembered after first save
 
 ### Educational Modules
-- Five interactive lab experiments (Lab 1–5) with 3D model viewer (Three.js + GLTFLoader)
+- Five interactive lab experiments (Lab 1–5) with guided calculations and quizzes
 - Curriculum viewer with guided content
 - Multilingual: English, French, German, Spanish, Dutch, Arabic
 - Language preference saved and applied across all lab sheets
@@ -123,9 +123,8 @@ Matrix-UI-Heat-Transfer/
 ├── CHANGELOG.md         # Version history
 ├── README-WEB.md        # Web/tablet mode documentation
 ├── INSTALL_HID_SUPPORT.md
-└── assets/              # Icons, images, fonts, 3D models, JS libs
-    ├── Tunnel.glb       # 3D tunnel model (Three.js)
-    └── libs/            # Three.js, Chart.js, GLTFLoader, etc.
+└── assets/              # Icons, images, fonts, and CSS
+    └── css/             # app.css
 ```
 
 ---
@@ -153,7 +152,6 @@ npm run build-win
 | `serialport` | 12.x | COM port communication |
 | `node-hid` | 3.x | USB HID bootloader |
 | `chart.js` | 4.x | Real-time graphing |
-| `three` | 0.181.x | 3D model viewer in lab modules |
 | `express` | 4.x | Web server for tablet mode |
 | `electron-updater` | 6.x | Auto-update from GitHub releases |
 | `electron-builder` | 25.x | App packaging (dev) |
