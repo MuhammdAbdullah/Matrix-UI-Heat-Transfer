@@ -71,15 +71,25 @@
       "manifest.json",
       "package.json",
       "assets/**/*",
+      "css/**/*",
       "node_modules/**/*"
     ],
     "npmRebuild": false,
     "nodeGypRebuild": false,
     "buildDependenciesFromSource": false,
     "win": {
-      "target": "msi",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
       "icon": "icon.ico",
-      "artifactName": "Matrix-UI-Heat-Transfer-Setup-${version}.${ext}"
+      "artifactName": "Matrix-UI-Heat-Transfer-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }

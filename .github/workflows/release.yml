@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Windows MSI
+      - name: Build Windows (NSIS installer + Portable)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build-win -- --publish always
