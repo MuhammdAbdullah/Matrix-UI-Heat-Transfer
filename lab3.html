@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 3 - Thermal Resistance</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    
+    <style>
+        html {
+            font-size: 16px; /* Base size - will be scaled automatically */
+        }
+        
+        /* Minimal theme variables to match overall app */
+        :root {
+            --bg: #000000;
+            --text: #ffffff;
+            --panel: #333333;
+            --border: #444444;
+            --accent: #2ed573;
+            --chart-bg: #1a1a1a;
+            --chart-border: #444444;
+            --chart-grid: #444444;
+            --chart-text: #000000;
+        }
+        body.theme-dark {
+            --bg: #000000;
+            --text: #ffffff;
+            --panel: #333333;
+            --border: #444444;
+            --accent: #2ed573;
+            --chart-bg: #1a1a1a;
+            --chart-border: #444444;
+            --chart-grid: #444444;
+            --chart-text: #eeeeee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--bg, #000000);
+            color: var(--text, #ffffff);
+            padding: 1.25rem; /* Changed from 20px to rem */
+            min-height: 100vh;
+            font-size: 1rem; /* Use rem units */
+        }
+        
+        /* RTL (Right-to-Left) support for Arabic */
+        body.rtl,
+        body.rtl .container,
+        body.rtl .header,
+        body.rtl .content,
+        body.rtl .section,
+        body.rtl .section p,
+        body.rtl .section h2,
+        body.rtl .section h3,
+        body.rtl .section h4,
+        body.rtl .interactive-box,
+        body.rtl .key-points,
+        body.rtl .key-points ul,
+        body.rtl .key-points li,
+        body.rtl .quiz-section,
+        body.rtl .quiz-question,
+        body.rtl .quiz-question h4,
+        body.rtl .quiz-options,
+        body.rtl .quiz-options label,
+        body.rtl .formula,
+        body.rtl ul,
+        body.rtl ol,
+        body.rtl li,
+        body.rtl p,
+        body.rtl .input-group,
+        body.rtl .input-group label {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        body.rtl .header {
+            text-align: center;
+        }
+        
+        body.rtl .section {
+            border-left: none;
+            border-right: 0.3125rem solid var(--accent, #2ed573);
+        }
+        
+        body.rtl .key-points {
+            border-left: none;
+            border-right: 0.3125rem solid #ffc107;
+        }
+        
+        body.rtl .formula {
+            border-left: none;
+            border-right: 0.25rem solid var(--accent, #2ed573);
+        }
+        
+        body.rtl .quiz-options label:hover {
+            transform: translateX(-0.3125rem);
+        }
+        
+        body.rtl table,
+        body.rtl .data-table,
+        body.rtl .data-table th,
+        body.rtl .data-table td {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--panel, #333);
+            border-radius: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.5); /* Changed from 0 20px 60px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--panel, #333);
+            color: var(--text, #ffffff);
+            padding: 1.875rem; /* Changed from 30px to rem */
+            text-align: center;
+            border-bottom: 0.125rem solid var(--border, #444); /* Changed from 2px to rem */
+            position: relative;
+        }
+
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 2.5rem; /* Changed from 40px to rem */
+            background: var(--bg, #000);
+        }
+
+        .section {
+            margin-bottom: 2.5rem; /* Changed from 40px to rem */
+            padding: 1.5625rem; /* Changed from 25px to rem */
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            border-left: 0.3125rem solid var(--accent, #2ed573); /* Changed from 5px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .section h2 {
+            color: var(--accent, #2ed573);
+            font-size: 1.8em;
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            display: flex;
+            align-items: center;
+            gap: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .section h3 {
+            color: var(--text, #ffffff);
+            opacity: 0.9;
+            font-size: 1.4em;
+            margin-top: 1.25rem; /* Changed from 20px to rem */
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .section p {
+            line-height: 1.8;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: var(--text, #ffffff);
+            opacity: 0.9;
+        }
+
+        .interactive-box {
+            background: var(--chart-bg, #1a1a1a);
+            padding: 1.5625rem; /* Changed from 25px to rem */
+            border-radius: 0.75rem; /* Changed from 12px to rem */
+            margin: 1.25rem 0; /* Changed from 20px to rem */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+        }
+
+        .interactive-box h4 {
+            color: var(--accent, #2ed573);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text, #ffffff);
+            font-size: 1.05em;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 0.125rem solid var(--border, #444); /* Changed from 2px to rem */
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--accent, #2ed573);
+        }
+
+        .calculate-btn {
+            background: linear-gradient(135deg, var(--accent, #2ed573) 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, var(--accent, #2ed573) 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.2em;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .formula {
+            background: var(--chart-bg, #1a1a1a);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #4facfe;
+            font-size: 1.1em;
+        }
+
+        .key-points {
+            background: #cfe2ff;
+            border-left: 5px solid #0d6efd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .key-points h4 {
+            color: #084298;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .key-points ul {
+            list-style-position: inside;
+            color: #084298;
+        }
+
+        .key-points li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .analogy-box {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 0.3125rem solid #ffc107; /* Changed from 5px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            margin: 1.25rem 0; /* Changed from 20px to rem */
+        }
+
+        .analogy-box h4 {
+            color: #ffc107;
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+            font-size: 1.3em;
+        }
+
+        .analogy-box p {
+            color: var(--text, #ffffff);
+        }
+
+        .quiz-section {
+            background: rgba(13, 110, 253, 0.15);
+            padding: 1.5625rem; /* Changed from 25px to rem */
+            border-radius: 0.75rem; /* Changed from 12px to rem */
+            margin-top: 1.875rem; /* Changed from 30px to rem */
+            border: 0.125rem solid #0d6efd; /* Changed from 2px to rem */
+        }
+
+        .quiz-question {
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+        }
+
+        .quiz-question h4 {
+            color: #0d6efd;
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+            font-size: 1.2em;
+        }
+
+        .quiz-options label {
+            display: block;
+            padding: 0.625rem; /* Changed from 10px to rem */
+            margin: 0.5rem 0; /* Changed from 8px to rem */
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text, #ffffff);
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .quiz-options label:hover {
+            background: var(--panel, #333);
+            transform: translateX(0.3125rem); /* Changed from 5px to rem */
+            border-color: #0d6efd;
+        }
+
+        .check-answer-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5625rem; /* Changed from 12px 25px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 0.625rem; /* Changed from 10px to rem */
+            transition: all 0.3s ease;
+            box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2); /* Changed from 0 4px 15px to rem */
+        }
+
+        .check-answer-btn:hover {
+            transform: translateY(-0.125rem); /* Changed from -2px to rem */
+            box-shadow: 0 0.375rem 1.25rem rgba(40, 167, 69, 0.4); /* Changed from 0 4px 15px to rem */
+        }
+
+        .feedback {
+            margin-top: 0.9375rem; /* Changed from 15px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            font-weight: bold;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 0.125rem solid #28a745; /* Changed from 2px to rem */
+            display: block;
+        }
+
+        .feedback.incorrect {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 0.125rem solid #dc3545; /* Changed from 2px to rem */
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem; /* Changed from 20px to rem */
+            margin: 1.25rem 0; /* Changed from 20px to rem */
+        }
+
+        .circuit-box {
+            background: var(--chart-bg, #1a1a1a);
+            border: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            margin: 1.25rem 0; /* Changed from 20px to rem */
+            text-align: center;
+            color: var(--text, #ffffff);
+        }
+
+        .layer-item {
+            background: var(--chart-bg, #1a1a1a);
+            border: 0.125rem solid var(--border, #444); /* Changed from 2px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            margin: 0.625rem 0; /* Changed from 10px to rem */
+            color: var(--text, #ffffff);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .icon {
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="container">
+        <div class="header">
+            <h1 data-translate="pageTitle">🧱 Lab 3: Thermal Resistance</h1>
+            <p data-translate="pageSubtitle">Understanding Resistance to Heat Flow</p>
+        </div>
+
+        <div class="content">
+            <!-- Introduction -->
+            <div class="section">
+                <h2><span class="icon">📚</span> <span data-translate="section1Title">What is Thermal Resistance?</span></h2>
+                <p data-translate="section1Para1">
+                    <strong>Thermal resistance (R)</strong> is a material's ability to resist heat flow. 
+                    It's like electrical resistance, but for heat instead of electricity! Just as a resistor 
+                    slows down electric current, thermal resistance slows down heat flow.
+                </p>
+                
+                <div class="analogy-box">
+                    <h4>💡 Think of It Like Water Flow:</h4>
+                    <p style="color: var(--text, #ffffff); line-height: 1.8;">
+                        Imagine water flowing through pipes. A narrow pipe (high resistance) slows the flow, 
+                        while a wide pipe (low resistance) allows fast flow. Similarly, insulation has high 
+                        thermal resistance (blocks heat), while metals have low thermal resistance (conduct heat easily).
+                    </p>
+                </div>
+
+                <div class="formula">
+                    Thermal Resistance: R = d / (k × A)
+                    <br><br>
+                    Or using temperature and heat flow:<br>
+                    R = ΔT / Q
+                    <br><br>
+                    Where:<br>
+                    • R = Thermal resistance (K/W or °C/W)<br>
+                    • d = Thickness (m)<br>
+                    • k = Thermal conductivity (W/m·K)<br>
+                    • A = Area (m²)<br>
+                    • ΔT = Temperature difference (K or °C)<br>
+                    • Q = Heat flow rate (W)
+                </div>
+            </div>
+
+            <!-- Key Concepts -->
+            <div class="section">
+                <h2><span class="icon">🎯</span> Key Concepts</h2>
+                
+                <h3>Relationship to Conductivity</h3>
+                <p>
+                    Thermal resistance is the <strong>inverse</strong> of thermal conductance. Materials with 
+                    high thermal conductivity (like copper) have LOW thermal resistance. Materials with low 
+                    thermal conductivity (like foam insulation) have HIGH thermal resistance.
+                </p>
+
+                <div class="key-points">
+                    <h4 data-translate="importantFacts">Important Facts:</h4>
+                    <ul>
+                        <li data-translate="fact1"><strong>Higher R-value:</strong> Better insulation (blocks more heat)</li>
+                        <li data-translate="fact2"><strong>Lower R-value:</strong> Worse insulation (allows more heat)</li>
+                        <li data-translate="fact3"><strong>Thicker materials:</strong> Higher resistance (more to get through)</li>
+                        <li data-translate="fact4"><strong>Larger area:</strong> Lower resistance (more paths for heat)</li>
+                    </ul>
+                </div>
+
+                <h3 data-translate="section2Sub2">R-Values in Building Construction</h3>
+                <p data-translate="section2Para2">
+                    In construction, insulation is rated by R-value. For example:
+                </p>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li data-translate="rValue1"><strong>R-13:</strong> Standard wall insulation</li>
+                    <li data-translate="rValue2"><strong>R-30:</strong> Typical attic insulation</li>
+                    <li data-translate="rValue3"><strong>R-49:</strong> High-efficiency attic insulation</li>
+                    <li data-translate="rValue4">Higher numbers = Better insulation!</li>
+                </ul>
+            </div>
+
+            <!-- Series and Parallel -->
+            <div class="section">
+                <h2><span class="icon">⚡</span> <span data-translate="section3Title">Thermal Circuits: Series and Parallel</span></h2>
+                
+                <h3 data-translate="section3Sub1">Series Resistance (Layers)</h3>
+                <p data-translate="section3Para1">
+                    When heat flows through multiple layers (like a wall with drywall, insulation, and siding), 
+                    the resistances ADD UP, just like series resistors in an electrical circuit.
+                </p>
+                
+                <div class="formula">
+                    R_total = R₁ + R₂ + R₃ + ... + Rₙ
+                </div>
+
+                <div class="circuit-box">
+                    <h4 data-translate="exampleTitle">Example: Wall with 3 Layers</h4>
+                    <p>🧱 Brick → 🧴 Insulation → 📋 Drywall</p>
+                    <p><strong>R_total = R_brick + R_insulation + R_drywall</strong></p>
+                </div>
+
+                <h3 data-translate="section3Sub2">Parallel Resistance (Side-by-Side Paths)</h3>
+                <p data-translate="section3Para2">
+                    When heat can flow through multiple parallel paths, thermal resistances combine like 
+                    parallel electrical resistors:
+                </p>
+                
+                <div class="formula">
+                    1/R_total = 1/R₁ + 1/R₂ + 1/R₃ + ... + 1/Rₙ
+                </div>
+            </div>
+
+            <!-- Interactive Calculator -->
+            <div class="section">
+                <h2><span class="icon">🧮</span> <span data-translate="section4Title">Thermal Resistance Calculator</span></h2>
+                
+                <div class="interactive-box">
+                    <h4 data-translate="calcTitle">Calculate Thermal Resistance</h4>
+                    
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label for="material" data-translate="labelMaterial">Material:</label>
+                            <select id="material" onchange="updateKValue()">
+                                <option value="0.026">Air (k = 0.026 W/m·K)</option>
+                                <option value="0.04">Fiberglass Insulation (k = 0.04)</option>
+                                <option value="0.6">Wood (k = 0.6)</option>
+                                <option value="0.8">Glass (k = 0.8)</option>
+                                <option value="1.4">Concrete (k = 1.4)</option>
+                                <option value="50">Steel (k = 50)</option>
+                                <option value="205" selected>Aluminum (k = 205)</option>
+                                <option value="385">Copper (k = 385)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="thickness" data-translate="labelThickness">Thickness (d) in meters:</label>
+                            <input type="number" id="thickness" value="0.01" step="0.001" min="0.001">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="area" data-translate="labelArea">Area (A) in m²:</label>
+                            <input type="number" id="area" value="1.0" step="0.01" min="0.01">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="kValue" data-translate="labelK">Thermal Conductivity (k):</label>
+                            <input type="number" id="kValue" value="205" step="0.01" readonly style="background: #f0f0f0;">
+                        </div>
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateResistance()" data-translate="calcButton">🔧 Calculate Resistance</button>
+
+                    <div class="result-box" id="resistanceResult"></div>
+                </div>
+            </div>
+
+            <!-- Multi-Layer Calculator -->
+            <div class="section">
+                <h2><span class="icon">🏗️</span> <span data-translate="section5Title">Multi-Layer Wall Calculator</span></h2>
+                
+                <div class="interactive-box">
+                    <h4 data-translate="multiLayerTitle">Calculate Total Resistance of Layered Wall</h4>
+                    <p data-translate="multiLayerDesc">Enter properties for each layer (heat flows through all layers in series):</p>
+                    
+                    <div class="layer-item">
+                        <h4 style="color: #4facfe;" data-translate="layer1">Layer 1 (Outside)</h4>
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label data-translate="labelThicknessCm">Thickness (cm):</label>
+                                <input type="number" id="d1" value="10" step="0.1">
+                            </div>
+                            <div class="input-group">
+                                <label data-translate="labelKValue">Thermal Conductivity (W/m·K):</label>
+                                <input type="number" id="k1" value="0.8" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer-item">
+                        <h4 style="color: #4facfe;" data-translate="layer2">Layer 2 (Middle)</h4>
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label data-translate="labelThicknessCm">Thickness (cm):</label>
+                                <input type="number" id="d2" value="15" step="0.1">
+                            </div>
+                            <div class="input-group">
+                                <label data-translate="labelKValue">Thermal Conductivity (W/m·K):</label>
+                                <input type="number" id="k2" value="0.04" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer-item">
+                        <h4 style="color: #4facfe;" data-translate="layer3">Layer 3 (Inside)</h4>
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label data-translate="labelThicknessCm">Thickness (cm):</label>
+                                <input type="number" id="d3" value="1.5" step="0.1">
+                            </div>
+                            <div class="input-group">
+                                <label data-translate="labelKValue">Thermal Conductivity (W/m·K):</label>
+                                <input type="number" id="k3" value="0.6" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label data-translate="labelWallArea">Wall Area (m²):</label>
+                        <input type="number" id="wallArea" value="10" step="0.1">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateMultiLayer()" data-translate="btnCalcR">🏗️ Calculate Total R-value</button>
+                    <button class="calculate-btn" onclick="calculateHeatLoss()" data-translate="btnCalcHeatLoss">🔥 Calculate Heat Loss</button>
+
+                    <div class="result-box" id="multiLayerResult"></div>
+                </div>
+            </div>
+
+            <!-- Connection to Device -->
+            <div class="section">
+                <h2><span class="icon">🔬</span> <span data-translate="section6Title">Thermal Resistance in Your Apparatus</span></h2>
+                
+                <div class="key-points">
+                    <h4 data-translate="deviceTitle">Understanding Resistance in Your Experiment:</h4>
+                    <ul>
+                        <li data-translate="deviceItem1"><strong>Metal bar:</strong> Low thermal resistance → Heat conducts easily along the bar</li>
+                        <li data-translate="deviceItem2"><strong>Air around bar:</strong> High thermal resistance → Insulates the bar</li>
+                        <li data-translate="deviceItem3"><strong>With fan ON:</strong> Lower convective resistance → More heat removed</li>
+                        <li data-translate="deviceItem4"><strong>With fan OFF:</strong> Higher convective resistance → Less heat removed</li>
+                        <li data-translate="deviceItem5"><strong>Temperature drop:</strong> Larger drop = Higher resistance in that section</li>
+                    </ul>
+                </div>
+
+                <p data-translate="section6Para1">
+                    By measuring temperatures at different points (T1-T8), you can calculate the thermal 
+                    resistance of each section of the bar. Sections with bigger temperature drops have 
+                    higher resistance!
+                </p>
+            </div>
+
+            <!-- Quiz -->
+            <div class="quiz-section">
+                <h2><span class="icon">✅</span> <span data-translate="quizTitle">Test Your Knowledge!</span></h2>
+                
+                <div class="quiz-question">
+                    <h4 data-translate="quiz1Question">Question 1: Which material has the HIGHEST thermal resistance?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> <span data-translate="quiz1OptionA">A) Copper</span></label>
+                        <label><input type="radio" name="q1" value="b"> <span data-translate="quiz1OptionB">B) Aluminum</span></label>
+                        <label><input type="radio" name="q1" value="c"> <span data-translate="quiz1OptionC">C) Fiberglass insulation</span></label>
+                        <label><input type="radio" name="q1" value="d"> <span data-translate="quiz1OptionD">D) Steel</span></label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q1', 'c', 'fb1')" data-translate="checkAnswerBtn">Check Answer</button>
+                    <div class="feedback" id="fb1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4 data-translate="quiz2Question">Question 2: How do resistances combine in a multi-layer wall?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> <span data-translate="quiz2OptionA">A) They multiply together</span></label>
+                        <label><input type="radio" name="q2" value="b"> <span data-translate="quiz2OptionB">B) They add together (series)</span></label>
+                        <label><input type="radio" name="q2" value="c"> <span data-translate="quiz2OptionC">C) They average together</span></label>
+                        <label><input type="radio" name="q2" value="d"> <span data-translate="quiz2OptionD">D) Only the highest matters</span></label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q2', 'b', 'fb2')" data-translate="checkAnswerBtn">Check Answer</button>
+                    <div class="feedback" id="fb2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4 data-translate="quiz3Question">Question 3: What happens to thermal resistance if you double the thickness?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> <span data-translate="quiz3OptionA">A) It stays the same</span></label>
+                        <label><input type="radio" name="q3" value="b"> <span data-translate="quiz3OptionB">B) It doubles</span></label>
+                        <label><input type="radio" name="q3" value="c"> <span data-translate="quiz3OptionC">C) It halves</span></label>
+                        <label><input type="radio" name="q3" value="d"> <span data-translate="quiz3OptionD">D) It quadruples</span></label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q3', 'b', 'fb3')" data-translate="checkAnswerBtn">Check Answer</button>
+                    <div class="feedback" id="fb3"></div>
+                </div>
+            </div>
+
+            <!-- Experiments -->
+            <div class="section">
+                <h2><span class="icon">🧪</span> <span data-translate="experimentsTitle">Suggested Experiments</span></h2>
+                
+                <div class="key-points">
+                    <h4 data-translate="tryThese">Try These:</h4>
+                    <ul>
+                        <li data-translate="exp1"><strong>Exp 1:</strong> Measure Q (heat flow) and ΔT between two sensors. Calculate R = ΔT/Q.</li>
+                        <li data-translate="exp2"><strong>Exp 2:</strong> Compare thermal resistance with fan OFF vs fan ON.</li>
+                        <li data-translate="exp3"><strong>Exp 3:</strong> Calculate R for each bar segment. Which has highest resistance?</li>
+                        <li data-translate="exp4"><strong>Exp 4:</strong> Add insulation around part of the bar. How does R change?</li>
+                        <li data-translate="exp5"><strong>Exp 5:</strong> Verify that R₁ + R₂ = R_total for two bar segments.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateKValue() {
+            var k = document.getElementById('material').value;
+            document.getElementById('kValue').value = k;
+        }
+
+        function calculateResistance() {
+            var k = parseFloat(document.getElementById('kValue').value);
+            var d = parseFloat(document.getElementById('thickness').value);
+            var A = parseFloat(document.getElementById('area').value);
+
+            if (isNaN(k) || isNaN(d) || isNaN(A) || k <= 0 || d <= 0 || A <= 0) {
+                alert('Please enter valid positive numbers!');
+                return;
+            }
+
+            var R = d / (k * A);
+
+            document.getElementById('resistanceResult').innerHTML = `
+                <strong>Thermal Resistance (R):</strong> ${R.toFixed(4)} K/W<br>
+                <strong>R-value (imperial):</strong> ${(R * 5.678).toFixed(2)} °F·ft²·hr/BTU<br><br>
+                <small>${R > 0.01 ? 'Good insulator!' : 'Poor insulator (good conductor)'}</small>
+            `;
+            document.getElementById('resistanceResult').classList.add('show');
+        }
+
+        function calculateMultiLayer() {
+            var d1 = parseFloat(document.getElementById('d1').value) / 100; // cm to m
+            var k1 = parseFloat(document.getElementById('k1').value);
+            var d2 = parseFloat(document.getElementById('d2').value) / 100;
+            var k2 = parseFloat(document.getElementById('k2').value);
+            var d3 = parseFloat(document.getElementById('d3').value) / 100;
+            var k3 = parseFloat(document.getElementById('k3').value);
+            var A = parseFloat(document.getElementById('wallArea').value);
+
+            var R1 = d1 / (k1 * A);
+            var R2 = d2 / (k2 * A);
+            var R3 = d3 / (k3 * A);
+            var Rtotal = R1 + R2 + R3;
+
+            document.getElementById('multiLayerResult').innerHTML = `
+                <strong>Layer Resistances:</strong><br>
+                R₁ = ${R1.toFixed(4)} K/W<br>
+                R₂ = ${R2.toFixed(4)} K/W<br>
+                R₃ = ${R3.toFixed(4)} K/W<br><br>
+                <strong>Total Resistance:</strong> ${Rtotal.toFixed(4)} K/W<br>
+                <strong>Total R-value (imperial):</strong> ${(Rtotal * 5.678).toFixed(2)} °F·ft²·hr/BTU
+            `;
+            document.getElementById('multiLayerResult').classList.add('show');
+        }
+
+        function calculateHeatLoss() {
+            var d1 = parseFloat(document.getElementById('d1').value) / 100;
+            var k1 = parseFloat(document.getElementById('k1').value);
+            var d2 = parseFloat(document.getElementById('d2').value) / 100;
+            var k2 = parseFloat(document.getElementById('k2').value);
+            var d3 = parseFloat(document.getElementById('d3').value) / 100;
+            var k3 = parseFloat(document.getElementById('k3').value);
+            var A = parseFloat(document.getElementById('wallArea').value);
+
+            var R1 = d1 / (k1 * A);
+            var R2 = d2 / (k2 * A);
+            var R3 = d3 / (k3 * A);
+            var Rtotal = R1 + R2 + R3;
+
+            var Tin = parseFloat(prompt('Enter inside temperature (°C):', '20'));
+            var Tout = parseFloat(prompt('Enter outside temperature (°C):', '0'));
+            
+            if (isNaN(Tin) || isNaN(Tout)) return;
+
+            var deltaT = Tin - Tout;
+            var Q = deltaT / Rtotal;
+
+            document.getElementById('multiLayerResult').innerHTML = `
+                <strong>Heat Loss Calculation:</strong><br>
+                ΔT = ${deltaT.toFixed(1)} °C<br>
+                R_total = ${Rtotal.toFixed(4)} K/W<br><br>
+                <strong>Heat Loss (Q):</strong> ${Q.toFixed(2)} Watts<br>
+                <strong>Per Day:</strong> ${(Q * 24 / 1000).toFixed(2)} kWh<br>
+                <strong>Cost/Day @ $0.12/kWh:</strong> $${(Q * 24 / 1000 * 0.12).toFixed(2)}
+            `;
+            document.getElementById('multiLayerResult').classList.add('show');
+        }
+
+        function checkAnswer(q, correct, fbId) {
+            var selected = document.querySelector('input[name="' + q + '"]:checked');
+            var fb = document.getElementById(fbId);
+            if (!selected) {
+                alert('Please select an answer!');
+                return;
+            }
+            if (selected.value === correct) {
+                fb.className = 'feedback correct';
+                fb.innerHTML = '✅ Excellent!';
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.innerHTML = '❌ Not quite - review the concepts!';
+            }
+        }
+        // Translation data for all languages
+        var translations = {
+            en: {
+                pageTitle: '🧱 Lab 3: Thermal Resistance',
+                pageSubtitle: 'Understanding Resistance to Heat Flow',
+                section1Title: 'What is Thermal Resistance?',
+                section1Para1: 'Thermal resistance (R) is a material\'s ability to resist heat flow. It\'s like electrical resistance, but for heat instead of electricity! Just as a resistor slows down electric current, thermal resistance slows down heat flow.',
+                importantFacts: 'Important Facts:',
+                fact1: 'Higher R-value: Better insulation (blocks more heat)',
+                fact2: 'Lower R-value: Worse insulation (allows more heat)',
+                fact3: 'Thicker materials: Higher resistance (more to get through)',
+                fact4: 'Larger area: Lower resistance (more paths for heat)',
+                section2Sub2: 'R-Values in Building Construction',
+                section2Para2: 'In construction, insulation is rated by R-value. For example:',
+                rValue1: 'R-13: Standard wall insulation',
+                rValue2: 'R-30: Typical attic insulation',
+                rValue3: 'R-49: High-efficiency attic insulation',
+                rValue4: 'Higher numbers = Better insulation!',
+                section3Title: 'Thermal Circuits: Series and Parallel',
+                section3Sub1: 'Series Resistance (Layers)',
+                section3Para1: 'When heat flows through multiple layers (like a wall with drywall, insulation, and siding), the resistances ADD UP, just like series resistors in an electrical circuit.',
+                exampleTitle: 'Example: Wall with 3 Layers',
+                section3Sub2: 'Parallel Resistance (Side-by-Side Paths)',
+                section3Para2: 'When heat can flow through multiple parallel paths, thermal resistances combine like parallel electrical resistors:',
+                section4Title: 'Thermal Resistance Calculator',
+                calcTitle: 'Calculate Thermal Resistance',
+                labelMaterial: 'Material:',
+                labelThickness: 'Thickness (d) in meters:',
+                labelArea: 'Area (A) in m²:',
+                labelK: 'Thermal Conductivity (k):',
+                calcButton: '🔧 Calculate Resistance',
+                section5Title: 'Multi-Layer Wall Calculator',
+                multiLayerTitle: 'Calculate Total Resistance of Layered Wall',
+                multiLayerDesc: 'Enter properties for each layer (heat flows through all layers in series):',
+                layer1: 'Layer 1 (Outside)',
+                layer2: 'Layer 2 (Middle)',
+                layer3: 'Layer 3 (Inside)',
+                labelThicknessCm: 'Thickness (cm):',
+                labelKValue: 'Thermal Conductivity (W/m·K):',
+                labelWallArea: 'Wall Area (m²):',
+                btnCalcR: '🏗️ Calculate Total R-value',
+                btnCalcHeatLoss: '🔥 Calculate Heat Loss',
+                section6Title: 'Thermal Resistance in Your Apparatus',
+                deviceTitle: 'Understanding Resistance in Your Experiment:',
+                deviceItem1: 'Metal bar: Low thermal resistance → Heat conducts easily along the bar',
+                deviceItem2: 'Air around bar: High thermal resistance → Insulates the bar',
+                deviceItem3: 'With fan ON: Lower convective resistance → More heat removed',
+                deviceItem4: 'With fan OFF: Higher convective resistance → Less heat removed',
+                deviceItem5: 'Temperature drop: Larger drop = Higher resistance in that section',
+                section6Para1: 'By measuring temperatures at different points (T1-T8), you can calculate the thermal resistance of each section of the bar. Sections with bigger temperature drops have higher resistance!',
+                quizTitle: 'Test Your Knowledge!',
+                quiz1Question: 'Question 1: Which material has the HIGHEST thermal resistance?',
+                quiz1OptionA: 'A) Copper',
+                quiz1OptionB: 'B) Aluminum',
+                quiz1OptionC: 'C) Fiberglass insulation',
+                quiz1OptionD: 'D) Steel',
+                quiz2Question: 'Question 2: How do resistances combine in a multi-layer wall?',
+                quiz2OptionA: 'A) They multiply together',
+                quiz2OptionB: 'B) They add together (series)',
+                quiz2OptionC: 'C) They average together',
+                quiz2OptionD: 'D) Only the highest matters',
+                quiz3Question: 'Question 3: What happens to thermal resistance if you double the thickness?',
+                quiz3OptionA: 'A) It stays the same',
+                quiz3OptionB: 'B) It doubles',
+                quiz3OptionC: 'C) It halves',
+                quiz3OptionD: 'D) It quadruples',
+                checkAnswerBtn: 'Check Answer',
+                experimentsTitle: 'Suggested Experiments',
+                tryThese: 'Try These:',
+                exp1: 'Exp 1: Measure Q (heat flow) and ΔT between two sensors. Calculate R = ΔT/Q.',
+                exp2: 'Exp 2: Compare thermal resistance with fan OFF vs fan ON.',
+                exp3: 'Exp 3: Calculate R for each bar segment. Which has highest resistance?',
+                exp4: 'Exp 4: Add insulation around part of the bar. How does R change?',
+                exp5: 'Exp 5: Verify that R₁ + R₂ = R_total for two bar segments.'
+            },
+            fr: {
+                pageTitle: '🧱 Laboratoire 3: Résistance Thermique',
+                pageSubtitle: 'Comprendre la Résistance au Flux de Chaleur',
+                section1Title: 'Qu\'est-ce que la Résistance Thermique?',
+                section1Para1: 'La résistance thermique (R) est la capacité d\'un matériau à résister au flux de chaleur. C\'est comme la résistance électrique, mais pour la chaleur au lieu de l\'électricité! Tout comme une résistance ralentit le courant électrique, la résistance thermique ralentit le flux de chaleur.',
+                importantFacts: 'Faits Importants:',
+                fact1: 'Valeur R plus élevée: Meilleure isolation (bloque plus de chaleur)',
+                fact2: 'Valeur R plus faible: Moins bonne isolation (permet plus de chaleur)',
+                fact3: 'Matériaux plus épais: Résistance plus élevée (plus à traverser)',
+                fact4: 'Surface plus grande: Résistance plus faible (plus de chemins pour la chaleur)',
+                section2Sub2: 'Valeurs R dans la Construction',
+                section2Para2: 'Dans la construction, l\'isolation est classée par valeur R. Par exemple:',
+                rValue1: 'R-13: Isolation murale standard',
+                rValue2: 'R-30: Isolation de grenier typique',
+                rValue3: 'R-49: Isolation de grenier haute efficacité',
+                rValue4: 'Des nombres plus élevés = Meilleure isolation!',
+                section3Title: 'Circuits Thermiques: Série et Parallèle',
+                section3Sub1: 'Résistance en Série (Couches)',
+                section3Para1: 'Lorsque la chaleur circule à travers plusieurs couches (comme un mur avec placoplâtre, isolation et revêtement), les résistances S\'ADDITIONNENT, comme les résistances en série dans un circuit électrique.',
+                exampleTitle: 'Exemple: Mur avec 3 Couches',
+                section3Sub2: 'Résistance en Parallèle (Chemins Côte à Côte)',
+                section3Para2: 'Lorsque la chaleur peut circuler à travers plusieurs chemins parallèles, les résistances thermiques se combinent comme les résistances électriques en parallèle:',
+                section4Title: 'Calculateur de Résistance Thermique',
+                calcTitle: 'Calculer la Résistance Thermique',
+                labelMaterial: 'Matériau:',
+                labelThickness: 'Épaisseur (d) en mètres:',
+                labelArea: 'Surface (A) en m²:',
+                labelK: 'Conductivité Thermique (k):',
+                calcButton: '🔧 Calculer la Résistance',
+                section5Title: 'Calculateur de Mur Multi-Couches',
+                multiLayerTitle: 'Calculer la Résistance Totale d\'un Mur en Couches',
+                multiLayerDesc: 'Entrez les propriétés de chaque couche (la chaleur circule à travers toutes les couches en série):',
+                layer1: 'Couche 1 (Extérieur)',
+                layer2: 'Couche 2 (Milieu)',
+                layer3: 'Couche 3 (Intérieur)',
+                labelThicknessCm: 'Épaisseur (cm):',
+                labelKValue: 'Conductivité Thermique (W/m·K):',
+                labelWallArea: 'Surface du Mur (m²):',
+                btnCalcR: '🏗️ Calculer la Valeur R Totale',
+                btnCalcHeatLoss: '🔥 Calculer la Perte de Chaleur',
+                section6Title: 'Résistance Thermique dans Votre Appareil',
+                deviceTitle: 'Comprendre la Résistance dans Votre Expérience:',
+                deviceItem1: 'Barre métallique: Faible résistance thermique → La chaleur se conduit facilement le long de la barre',
+                deviceItem2: 'Air autour de la barre: Haute résistance thermique → Isole la barre',
+                deviceItem3: 'Avec ventilateur ON: Résistance convective plus faible → Plus de chaleur retirée',
+                deviceItem4: 'Avec ventilateur OFF: Résistance convective plus élevée → Moins de chaleur retirée',
+                deviceItem5: 'Chute de température: Chute plus grande = Résistance plus élevée dans cette section',
+                section6Para1: 'En mesurant les températures à différents points (T1-T8), vous pouvez calculer la résistance thermique de chaque section de la barre. Les sections avec des chutes de température plus importantes ont une résistance plus élevée!',
+                quizTitle: 'Testez Vos Connaissances!',
+                quiz1Question: 'Question 1: Quel matériau a la résistance thermique la PLUS ÉLEVÉE?',
+                quiz1OptionA: 'A) Cuivre',
+                quiz1OptionB: 'B) Aluminium',
+                quiz1OptionC: 'C) Isolation en fibre de verre',
+                quiz1OptionD: 'D) Acier',
+                quiz2Question: 'Question 2: Comment les résistances se combinent-elles dans un mur multi-couches?',
+                quiz2OptionA: 'A) Elles se multiplient',
+                quiz2OptionB: 'B) Elles s\'additionnent (série)',
+                quiz2OptionC: 'C) Elles se moyennent',
+                quiz2OptionD: 'D) Seule la plus élevée compte',
+                quiz3Question: 'Question 3: Que se passe-t-il avec la résistance thermique si vous doublez l\'épaisseur?',
+                quiz3OptionA: 'A) Elle reste la même',
+                quiz3OptionB: 'B) Elle double',
+                quiz3OptionC: 'C) Elle diminue de moitié',
+                quiz3OptionD: 'D) Elle quadruple',
+                checkAnswerBtn: 'Vérifier la Réponse',
+                experimentsTitle: 'Expériences Suggérées',
+                tryThese: 'Essayez Ceci:',
+                exp1: 'Exp 1: Mesurez Q (flux de chaleur) et ΔT entre deux capteurs. Calculez R = ΔT/Q.',
+                exp2: 'Exp 2: Comparez la résistance thermique avec ventilateur OFF vs ON.',
+                exp3: 'Exp 3: Calculez R pour chaque segment de barre. Lequel a la résistance la plus élevée?',
+                exp4: 'Exp 4: Ajoutez de l\'isolation autour d\'une partie de la barre. Comment R change-t-il?',
+                exp5: 'Exp 5: Vérifiez que R₁ + R₂ = R_total pour deux segments de barre.'
+            },
+            de: {
+                pageTitle: '🧱 Labor 3: Thermischer Widerstand',
+                pageSubtitle: 'Verstehen des Widerstands gegen Wärmefluss',
+                section1Title: 'Was ist Thermischer Widerstand?',
+                section1Para1: 'Thermischer Widerstand (R) ist die Fähigkeit eines Materials, dem Wärmefluss zu widerstehen. Es ist wie elektrischer Widerstand, aber für Wärme statt Elektrizität! Genau wie ein Widerstand den elektrischen Strom verlangsamt, verlangsamt der thermische Widerstand den Wärmefluss.',
+                importantFacts: 'Wichtige Fakten:',
+                fact1: 'Höherer R-Wert: Bessere Isolierung (blockiert mehr Wärme)',
+                fact2: 'Niedrigerer R-Wert: Schlechtere Isolierung (lässt mehr Wärme durch)',
+                fact3: 'Dickere Materialien: Höherer Widerstand (mehr zu durchdringen)',
+                fact4: 'Größere Fläche: Niedrigerer Widerstand (mehr Wege für Wärme)',
+                section2Sub2: 'R-Werte im Bauwesen',
+                section2Para2: 'Im Bauwesen wird Isolierung nach R-Wert bewertet. Zum Beispiel:',
+                rValue1: 'R-13: Standard-Wandisolierung',
+                rValue2: 'R-30: Typische Dachbodenisolierung',
+                rValue3: 'R-49: Hocheffiziente Dachbodenisolierung',
+                rValue4: 'Höhere Zahlen = Bessere Isolierung!',
+                section3Title: 'Thermische Schaltungen: Serie und Parallel',
+                section3Sub1: 'Serienwiderstand (Schichten)',
+                section3Para1: 'Wenn Wärme durch mehrere Schichten fließt (wie eine Wand mit Trockenbau, Isolierung und Verkleidung), addieren sich die Widerstände, genau wie Serienwiderstände in einer elektrischen Schaltung.',
+                exampleTitle: 'Beispiel: Wand mit 3 Schichten',
+                section3Sub2: 'Parallelwiderstand (Nebeneinander Liegende Wege)',
+                section3Para2: 'Wenn Wärme durch mehrere parallele Wege fließen kann, kombinieren sich thermische Widerstände wie parallele elektrische Widerstände:',
+                section4Title: 'Thermischer Widerstandsrechner',
+                calcTitle: 'Thermischen Widerstand Berechnen',
+                labelMaterial: 'Material:',
+                labelThickness: 'Dicke (d) in Metern:',
+                labelArea: 'Fläche (A) in m²:',
+                labelK: 'Wärmeleitfähigkeit (k):',
+                calcButton: '🔧 Widerstand Berechnen',
+                section5Title: 'Mehrschicht-Wandrechner',
+                multiLayerTitle: 'Gesamtwiderstand einer Geschichteten Wand Berechnen',
+                multiLayerDesc: 'Geben Sie Eigenschaften für jede Schicht ein (Wärme fließt durch alle Schichten in Serie):',
+                layer1: 'Schicht 1 (Außen)',
+                layer2: 'Schicht 2 (Mitte)',
+                layer3: 'Schicht 3 (Innen)',
+                labelThicknessCm: 'Dicke (cm):',
+                labelKValue: 'Wärmeleitfähigkeit (W/m·K):',
+                labelWallArea: 'Wandfläche (m²):',
+                btnCalcR: '🏗️ Gesamten R-Wert Berechnen',
+                btnCalcHeatLoss: '🔥 Wärmeverlust Berechnen',
+                section6Title: 'Thermischer Widerstand in Ihrem Gerät',
+                deviceTitle: 'Widerstand in Ihrem Experiment Verstehen:',
+                deviceItem1: 'Metallstange: Niedriger thermischer Widerstand → Wärme leitet sich leicht entlang der Stange',
+                deviceItem2: 'Luft um Stange: Hoher thermischer Widerstand → Isoliert die Stange',
+                deviceItem3: 'Mit Ventilator EIN: Niedrigerer konvektiver Widerstand → Mehr Wärme entfernt',
+                deviceItem4: 'Mit Ventilator AUS: Höherer konvektiver Widerstand → Weniger Wärme entfernt',
+                deviceItem5: 'Temperaturabfall: Größerer Abfall = Höherer Widerstand in diesem Abschnitt',
+                section6Para1: 'Durch Messen der Temperaturen an verschiedenen Punkten (T1-T8) können Sie den thermischen Widerstand jedes Abschnitts der Stange berechnen. Abschnitte mit größeren Temperaturabfällen haben einen höheren Widerstand!',
+                quizTitle: 'Testen Sie Ihr Wissen!',
+                quiz1Question: 'Frage 1: Welches Material hat den HÖCHSTEN thermischen Widerstand?',
+                quiz1OptionA: 'A) Kupfer',
+                quiz1OptionB: 'B) Aluminium',
+                quiz1OptionC: 'C) Glasfaserisolierung',
+                quiz1OptionD: 'D) Stahl',
+                quiz2Question: 'Frage 2: Wie kombinieren sich Widerstände in einer mehrschichtigen Wand?',
+                quiz2OptionA: 'A) Sie multiplizieren sich',
+                quiz2OptionB: 'B) Sie addieren sich (Serie)',
+                quiz2OptionC: 'C) Sie mitteln sich',
+                quiz2OptionD: 'D) Nur der höchste zählt',
+                quiz3Question: 'Frage 3: Was passiert mit dem thermischen Widerstand, wenn Sie die Dicke verdoppeln?',
+                quiz3OptionA: 'A) Er bleibt gleich',
+                quiz3OptionB: 'B) Er verdoppelt sich',
+                quiz3OptionC: 'C) Er halbiert sich',
+                quiz3OptionD: 'D) Er vervierfacht sich',
+                checkAnswerBtn: 'Antwort Überprüfen',
+                experimentsTitle: 'Vorgeschlagene Experimente',
+                tryThese: 'Versuchen Sie Dies:',
+                exp1: 'Exp 1: Messen Sie Q (Wärmefluss) und ΔT zwischen zwei Sensoren. Berechnen Sie R = ΔT/Q.',
+                exp2: 'Exp 2: Vergleichen Sie thermischen Widerstand mit Ventilator AUS vs EIN.',
+                exp3: 'Exp 3: Berechnen Sie R für jedes Stangensegment. Welches hat den höchsten Widerstand?',
+                exp4: 'Exp 4: Fügen Sie Isolierung um einen Teil der Stange hinzu. Wie ändert sich R?',
+                exp5: 'Exp 5: Verifizieren Sie, dass R₁ + R₂ = R_total für zwei Stangensegmente.'
+            },
+            es: {
+                pageTitle: '🧱 Laboratorio 3: Resistencia Térmica',
+                pageSubtitle: 'Comprender la Resistencia al Flujo de Calor',
+                section1Title: '¿Qué es la Resistencia Térmica?',
+                section1Para1: 'La resistencia térmica (R) es la capacidad de un material para resistir el flujo de calor. ¡Es como la resistencia eléctrica, pero para el calor en lugar de la electricidad! Así como una resistencia ralentiza la corriente eléctrica, la resistencia térmica ralentiza el flujo de calor.',
+                importantFacts: 'Hechos Importantes:',
+                fact1: 'Valor R más alto: Mejor aislamiento (bloquea más calor)',
+                fact2: 'Valor R más bajo: Peor aislamiento (permite más calor)',
+                fact3: 'Materiales más gruesos: Mayor resistencia (más que atravesar)',
+                fact4: 'Área más grande: Menor resistencia (más caminos para el calor)',
+                section2Sub2: 'Valores R en la Construcción',
+                section2Para2: 'En construcción, el aislamiento se clasifica por valor R. Por ejemplo:',
+                rValue1: 'R-13: Aislamiento de pared estándar',
+                rValue2: 'R-30: Aislamiento de ático típico',
+                rValue3: 'R-49: Aislamiento de ático de alta eficiencia',
+                rValue4: '¡Números más altos = Mejor aislamiento!',
+                section3Title: 'Circuitos Térmicos: Serie y Paralelo',
+                section3Sub1: 'Resistencia en Serie (Capas)',
+                section3Para1: 'Cuando el calor fluye a través de múltiples capas (como una pared con paneles de yeso, aislamiento y revestimiento), las resistencias SE SUMAN, igual que las resistencias en serie en un circuito eléctrico.',
+                exampleTitle: 'Ejemplo: Pared con 3 Capas',
+                section3Sub2: 'Resistencia en Paralelo (Caminos Lado a Lado)',
+                section3Para2: 'Cuando el calor puede fluir a través de múltiples caminos paralelos, las resistencias térmicas se combinan como resistencias eléctricas en paralelo:',
+                section4Title: 'Calculadora de Resistencia Térmica',
+                calcTitle: 'Calcular Resistencia Térmica',
+                labelMaterial: 'Material:',
+                labelThickness: 'Espesor (d) en metros:',
+                labelArea: 'Área (A) en m²:',
+                labelK: 'Conductividad Térmica (k):',
+                calcButton: '🔧 Calcular Resistencia',
+                section5Title: 'Calculadora de Pared Multicapa',
+                multiLayerTitle: 'Calcular Resistencia Total de Pared en Capas',
+                multiLayerDesc: 'Ingrese propiedades para cada capa (el calor fluye a través de todas las capas en serie):',
+                layer1: 'Capa 1 (Exterior)',
+                layer2: 'Capa 2 (Medio)',
+                layer3: 'Capa 3 (Interior)',
+                labelThicknessCm: 'Espesor (cm):',
+                labelKValue: 'Conductividad Térmica (W/m·K):',
+                labelWallArea: 'Área de Pared (m²):',
+                btnCalcR: '🏗️ Calcular Valor R Total',
+                btnCalcHeatLoss: '🔥 Calcular Pérdida de Calor',
+                section6Title: 'Resistencia Térmica en Su Aparato',
+                deviceTitle: 'Entender la Resistencia en Su Experimento:',
+                deviceItem1: 'Barra de metal: Baja resistencia térmica → El calor se conduce fácilmente a lo largo de la barra',
+                deviceItem2: 'Aire alrededor de la barra: Alta resistencia térmica → Aísla la barra',
+                deviceItem3: 'Con ventilador ENCENDIDO: Menor resistencia convectiva → Se elimina más calor',
+                deviceItem4: 'Con ventilador APAGADO: Mayor resistencia convectiva → Se elimina menos calor',
+                deviceItem5: 'Caída de temperatura: Caída mayor = Mayor resistencia en esa sección',
+                section6Para1: 'Al medir temperaturas en diferentes puntos (T1-T8), puede calcular la resistencia térmica de cada sección de la barra. ¡Las secciones con caídas de temperatura más grandes tienen mayor resistencia!',
+                quizTitle: '¡Pruebe Sus Conocimientos!',
+                quiz1Question: 'Pregunta 1: ¿Qué material tiene la resistencia térmica MÁS ALTA?',
+                quiz1OptionA: 'A) Cobre',
+                quiz1OptionB: 'B) Aluminio',
+                quiz1OptionC: 'C) Aislamiento de fibra de vidrio',
+                quiz1OptionD: 'D) Acero',
+                quiz2Question: 'Pregunta 2: ¿Cómo se combinan las resistencias en una pared multicapa?',
+                quiz2OptionA: 'A) Se multiplican',
+                quiz2OptionB: 'B) Se suman (serie)',
+                quiz2OptionC: 'C) Se promedian',
+                quiz2OptionD: 'D) Solo la más alta importa',
+                quiz3Question: 'Pregunta 3: ¿Qué sucede con la resistencia térmica si duplica el espesor?',
+                quiz3OptionA: 'A) Permanece igual',
+                quiz3OptionB: 'B) Se duplica',
+                quiz3OptionC: 'C) Se reduce a la mitad',
+                quiz3OptionD: 'D) Se cuadruplica',
+                checkAnswerBtn: 'Verificar Respuesta',
+                experimentsTitle: 'Experimentos Sugeridos',
+                tryThese: 'Pruebe Esto:',
+                exp1: 'Exp 1: Mida Q (flujo de calor) y ΔT entre dos sensores. Calcule R = ΔT/Q.',
+                exp2: 'Exp 2: Compare resistencia térmica con ventilador APAGADO vs ENCENDIDO.',
+                exp3: 'Exp 3: Calcule R para cada segmento de barra. ¿Cuál tiene mayor resistencia?',
+                exp4: 'Exp 4: Agregue aislamiento alrededor de parte de la barra. ¿Cómo cambia R?',
+                exp5: 'Exp 5: Verifique que R₁ + R₂ = R_total para dos segmentos de barra.'
+            },
+            nl: {
+                pageTitle: '🧱 Lab 3: Thermische Weerstand',
+                pageSubtitle: 'Begrijpen van Weerstand tegen Warmtestroom',
+                section1Title: 'Wat is Thermische Weerstand?',
+                section1Para1: 'Thermische weerstand (R) is het vermogen van een materiaal om warmtestroom te weerstaan. Het is zoals elektrische weerstand, maar voor warmte in plaats van elektriciteit! Net zoals een weerstand de elektrische stroom vertraagt, vertraagt thermische weerstand de warmtestroom.',
+                importantFacts: 'Belangrijke Feiten:',
+                fact1: 'Hogere R-waarde: Betere isolatie (blokkeert meer warmte)',
+                fact2: 'Lagere R-waarde: Slechtere isolatie (laat meer warmte door)',
+                fact3: 'Dikkere materialen: Hogere weerstand (meer om doorheen te gaan)',
+                fact4: 'Groter oppervlak: Lagere weerstand (meer paden voor warmte)',
+                section2Sub2: 'R-waarden in de Bouw',
+                section2Para2: 'In de bouw wordt isolatie beoordeeld op R-waarde. Bijvoorbeeld:',
+                rValue1: 'R-13: Standaard muurisolatie',
+                rValue2: 'R-30: Typische zolderisolatie',
+                rValue3: 'R-49: Hoogrendements zolderisolatie',
+                rValue4: 'Hogere nummers = Betere isolatie!',
+                section3Title: 'Thermische Schakelingen: Serie en Parallel',
+                section3Sub1: 'Serieweerstand (Lagen)',
+                section3Para1: 'Wanneer warmte door meerdere lagen stroomt (zoals een muur met gipsplaat, isolatie en bekleding), tellen de weerstanden bij elkaar op, net als serieweerstanden in een elektrisch circuit.',
+                exampleTitle: 'Voorbeeld: Muur met 3 Lagen',
+                section3Sub2: 'Parallelweerstand (Zij-aan-Zij Paden)',
+                section3Para2: 'Wanneer warmte door meerdere parallelle paden kan stromen, combineren thermische weerstanden zoals parallelle elektrische weerstanden:',
+                section4Title: 'Thermische Weerstand Calculator',
+                calcTitle: 'Bereken Thermische Weerstand',
+                labelMaterial: 'Materiaal:',
+                labelThickness: 'Dikte (d) in meters:',
+                labelArea: 'Oppervlakte (A) in m²:',
+                labelK: 'Thermische Geleidbaarheid (k):',
+                calcButton: '🔧 Bereken Weerstand',
+                section5Title: 'Meerlaagse Muur Calculator',
+                multiLayerTitle: 'Bereken Totale Weerstand van Gelaagde Muur',
+                multiLayerDesc: 'Voer eigenschappen in voor elke laag (warmte stroomt door alle lagen in serie):',
+                layer1: 'Laag 1 (Buiten)',
+                layer2: 'Laag 2 (Midden)',
+                layer3: 'Laag 3 (Binnen)',
+                labelThicknessCm: 'Dikte (cm):',
+                labelKValue: 'Thermische Geleidbaarheid (W/m·K):',
+                labelWallArea: 'Muroppervlakte (m²):',
+                btnCalcR: '🏗️ Bereken Totale R-waarde',
+                btnCalcHeatLoss: '🔥 Bereken Warmteverlies',
+                section6Title: 'Thermische Weerstand in Uw Apparaat',
+                deviceTitle: 'Weerstand Begrijpen in Uw Experiment:',
+                deviceItem1: 'Metalen staaf: Lage thermische weerstand → Warmte geleidt gemakkelijk langs de staaf',
+                deviceItem2: 'Lucht rond staaf: Hoge thermische weerstand → Isoleert de staaf',
+                deviceItem3: 'Met ventilator AAN: Lagere convectieve weerstand → Meer warmte verwijderd',
+                deviceItem4: 'Met ventilator UIT: Hogere convectieve weerstand → Minder warmte verwijderd',
+                deviceItem5: 'Temperatuurdaling: Grotere daling = Hogere weerstand in dat gedeelte',
+                section6Para1: 'Door temperaturen op verschillende punten (T1-T8) te meten, kunt u de thermische weerstand van elk gedeelte van de staaf berekenen. Gedeelten met grotere temperatuurdalingen hebben een hogere weerstand!',
+                quizTitle: 'Test Je Kennis!',
+                quiz1Question: 'Vraag 1: Welk materiaal heeft de HOOGSTE thermische weerstand?',
+                quiz1OptionA: 'A) Koper',
+                quiz1OptionB: 'B) Aluminium',
+                quiz1OptionC: 'C) Glasvezelisolatie',
+                quiz1OptionD: 'D) Staal',
+                quiz2Question: 'Vraag 2: Hoe combineren weerstanden in een meerlaagse muur?',
+                quiz2OptionA: 'A) Ze vermenigvuldigen',
+                quiz2OptionB: 'B) Ze tellen bij elkaar op (serie)',
+                quiz2OptionC: 'C) Ze middelen',
+                quiz2OptionD: 'D) Alleen de hoogste telt',
+                quiz3Question: 'Vraag 3: Wat gebeurt er met thermische weerstand als je de dikte verdubbelt?',
+                quiz3OptionA: 'A) Het blijft hetzelfde',
+                quiz3OptionB: 'B) Het verdubbelt',
+                quiz3OptionC: 'C) Het halveert',
+                quiz3OptionD: 'D) Het verviervoudigt',
+                checkAnswerBtn: 'Controleer Antwoord',
+                experimentsTitle: 'Voorgestelde Experimenten',
+                tryThese: 'Probeer Dit:',
+                exp1: 'Exp 1: Meet Q (warmtestroom) en ΔT tussen twee sensoren. Bereken R = ΔT/Q.',
+                exp2: 'Exp 2: Vergelijk thermische weerstand met ventilator UIT vs AAN.',
+                exp3: 'Exp 3: Bereken R voor elk staafsegment. Welke heeft de hoogste weerstand?',
+                exp4: 'Exp 4: Voeg isolatie toe rond een deel van de staaf. Hoe verandert R?',
+                exp5: 'Exp 5: Verifieer dat R₁ + R₂ = R_total voor twee staafsegmenten.'
+            },
+            ar: {
+                pageTitle: '🧱 المعمل 3: المقاومة الحرارية',
+                pageSubtitle: 'فهم مقاومة تدفق الحرارة',
+                section1Title: 'ما هي المقاومة الحرارية؟',
+                section1Para1: 'المقاومة الحرارية (R) هي قدرة المادة على مقاومة تدفق الحرارة. إنها مثل المقاومة الكهربائية، ولكن للحرارة بدلاً من الكهرباء! تماماً كما أن المقاومة تبطئ التيار الكهربائي، فإن المقاومة الحرارية تبطئ تدفق الحرارة.',
+                importantFacts: 'حقائق مهمة:',
+                fact1: 'قيمة R أعلى: عزل أفضل (يحجب المزيد من الحرارة)',
+                fact2: 'قيمة R أقل: عزل أسوأ (يسمح بمزيد من الحرارة)',
+                fact3: 'مواد أكثر سماكة: مقاومة أعلى (المزيد للعبور)',
+                fact4: 'مساحة أكبر: مقاومة أقل (المزيد من المسارات للحرارة)',
+                section2Sub2: 'قيم R في البناء',
+                section2Para2: 'في البناء، يتم تصنيف العزل بقيمة R. على سبيل المثال:',
+                rValue1: 'R-13: عزل الجدار القياسي',
+                rValue2: 'R-30: عزل العلية النموذجي',
+                rValue3: 'R-49: عزل علية عالي الكفاءة',
+                rValue4: 'أرقام أعلى = عزل أفضل!',
+                section3Title: 'الدوائر الحرارية: التسلسل والتوازي',
+                section3Sub1: 'المقاومة التسلسلية (الطبقات)',
+                section3Para1: 'عندما تتدفق الحرارة عبر طبقات متعددة (مثل جدار مع الجبس، العزل، والكسوة)، فإن المقاومات تتجمع معاً، تماماً مثل المقاومات التسلسلية في دائرة كهربائية.',
+                exampleTitle: 'مثال: جدار بثلاث طبقات',
+                section3Sub2: 'المقاومة المتوازية (المسارات جنباً إلى جنب)',
+                section3Para2: 'عندما يمكن للحرارة أن تتدفق عبر مسارات متوازية متعددة، فإن المقاومات الحرارية تجتمع مثل المقاومات الكهربائية المتوازية:',
+                section4Title: 'آلة حاسبة المقاومة الحرارية',
+                calcTitle: 'احسب المقاومة الحرارية',
+                labelMaterial: 'المادة:',
+                labelThickness: 'السماكة (d) بالمتر:',
+                labelArea: 'المساحة (A) بوحدة m²:',
+                labelK: 'التوصيل الحراري (k):',
+                calcButton: '🔧 احسب المقاومة',
+                section5Title: 'آلة حاسبة الجدار متعدد الطبقات',
+                multiLayerTitle: 'احسب المقاومة الإجمالية للجدار الطبقي',
+                multiLayerDesc: 'أدخل خصائص كل طبقة (الحرارة تتدفق عبر جميع الطبقات بشكل تسلسلي):',
+                layer1: 'الطبقة 1 (الخارج)',
+                layer2: 'الطبقة 2 (الوسط)',
+                layer3: 'الطبقة 3 (الداخل)',
+                labelThicknessCm: 'السماكة (cm):',
+                labelKValue: 'التوصيل الحراري (W/m·K):',
+                labelWallArea: 'مساحة الجدار (m²):',
+                btnCalcR: '🏗️ احسب قيمة R الإجمالية',
+                btnCalcHeatLoss: '🔥 احسب فقدان الحرارة',
+                section6Title: 'المقاومة الحرارية في جهازك',
+                deviceTitle: 'فهم المقاومة في تجربتك:',
+                deviceItem1: 'القضيب المعدني: مقاومة حرارية منخفضة → الحرارة تنتقل بسهولة على طول القضيب',
+                deviceItem2: 'الهواء حول القضيب: مقاومة حرارية عالية → يعزل القضيب',
+                deviceItem3: 'مع المروحة تشغيل: مقاومة حمل أقل → إزالة المزيد من الحرارة',
+                deviceItem4: 'مع المروحة إيقاف: مقاومة حمل أعلى → إزالة أقل من الحرارة',
+                deviceItem5: 'انخفاض درجة الحرارة: انخفاض أكبر = مقاومة أعلى في ذلك القسم',
+                section6Para1: 'عن طريق قياس درجات الحرارة في نقاط مختلفة (T1-T8)، يمكنك حساب المقاومة الحرارية لكل قسم من القضيب. الأقسام ذات انخفاضات درجة الحرارة الأكبر لديها مقاومة أعلى!',
+                quizTitle: 'اختبر معرفتك!',
+                quiz1Question: 'السؤال 1: أي مادة لديها أعلى مقاومة حرارية؟',
+                quiz1OptionA: 'أ) النحاس',
+                quiz1OptionB: 'ب) الألومنيوم',
+                quiz1OptionC: 'ج) عزل الألياف الزجاجية',
+                quiz1OptionD: 'د) الفولاذ',
+                quiz2Question: 'السؤال 2: كيف تجتمع المقاومات في جدار متعدد الطبقات؟',
+                quiz2OptionA: 'أ) تتضاعف معاً',
+                quiz2OptionB: 'ب) تجتمع معاً (تسلسلي)',
+                quiz2OptionC: 'ج) تتوسط معاً',
+                quiz2OptionD: 'د) فقط الأعلى يهم',
+                quiz3Question: 'السؤال 3: ماذا يحدث للمقاومة الحرارية إذا ضاعفت السماكة؟',
+                quiz3OptionA: 'أ) تبقى كما هي',
+                quiz3OptionB: 'ب) تتضاعف',
+                quiz3OptionC: 'ج) تنخفض إلى النصف',
+                quiz3OptionD: 'د) تتضاعف أربع مرات',
+                checkAnswerBtn: 'تحقق من الإجابة',
+                experimentsTitle: 'التجارب المقترحة',
+                tryThese: 'جرب هذا:',
+                exp1: 'التجربة 1: قس Q (تدفق الحرارة) و ΔT بين مستشعرين. احسب R = ΔT/Q.',
+                exp2: 'التجربة 2: قارن المقاومة الحرارية مع المروحة إيقاف مقابل تشغيل.',
+                exp3: 'التجربة 3: احسب R لكل جزء من القضيب. أي جزء لديه أعلى مقاومة؟',
+                exp4: 'التجربة 4: أضف عزل حول جزء من القضيب. كيف يتغير R؟',
+                exp5: 'التجربة 5: تحقق من أن R₁ + R₂ = R_total لجزئين من القضيب.'
+            }
+        };
+
+        // Function to change the language of the page
+        function changeLanguage(languageCode) {
+            var languageTranslations = translations[languageCode];
+            if (!languageTranslations) return;
+            
+            var elementsToTranslate = document.querySelectorAll('[data-translate]');
+            for (var i = 0; i < elementsToTranslate.length; i++) {
+                var element = elementsToTranslate[i];
+                var translationKey = element.getAttribute('data-translate');
+                var translatedText = languageTranslations[translationKey];
+                
+                if (translatedText) {
+                    element.textContent = translatedText;
+                }
+            }
+            
+            // Add or remove RTL class for Arabic
+            if (languageCode === 'ar') {
+                document.body.classList.add('rtl');
+                document.documentElement.setAttribute('dir', 'rtl');
+                document.documentElement.setAttribute('lang', 'ar');
+            } else {
+                document.body.classList.remove('rtl');
+                document.documentElement.setAttribute('dir', 'ltr');
+                document.documentElement.setAttribute('lang', languageCode);
+            }
+            
+            localStorage.setItem('selectedLanguage', languageCode);
+        }
+
+        // Function to load the saved language when page loads
+        function loadSavedLanguage() {
+            // Get the saved language from localStorage (set from Curriculum page)
+            var savedLanguage = localStorage.getItem('selectedLanguage');
+            if (savedLanguage) {
+                changeLanguage(savedLanguage);
+            }
+        }
+
+        // When the page loads, load the saved language
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSavedLanguage();
+        });
+    </script>
+    
+    <!-- Load Responsive Scaling Script -->
+</body>
+</html>

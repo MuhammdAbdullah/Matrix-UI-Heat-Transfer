@@ -1,0 +1,86 @@
+{
+  "name": "heat-transfer-app",
+  "version": "1.3.4",
+  "description": "Matrix UI Heat Transfer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "web": "node server.js",
+    "web-dev": "nodemon server.js",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-all": "electron-builder --win --mac --linux",
+    "rebuild-hid": "electron-rebuild -f -w node-hid"
+  },
+  "keywords": [
+    "electron",
+    "com-port",
+    "heat-transfer",
+    "serial",
+    "web-app",
+    "android",
+    "pwa"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^38.2.2",
+    "electron-builder": "^25.1.8",
+    "jimp": "^1.6.0",
+    "nodemon": "^3.1.10",
+    "to-ico": "^1.0.1"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.4",
+    "electron-updater": "^6.6.2",
+    "express": "^4.21.2",
+    "node-hid": "^3.1.1",
+    "occt-import-js": "^0.0.23",
+    "serialport": "^12.0.0",
+    "three": "^0.181.1"
+  },
+  "build": {
+    "appId": "com.thermo.heat-transfer-app",
+    "productName": "Matrix UI Heat Transfer",
+    "publish": {
+      "provider": "github",
+      "owner": "MuhammdAbdullah",
+      "repo": "Matrix-UI-Heat-Transfer"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "admin-panel.js",
+      "index.html",
+      "index-web.html",
+      "renderer-web.js",
+      "admin.html",
+      "splash.html",
+      "curriculum.html",
+      "lab1.html",
+      "lab2.html",
+      "lab3.html",
+      "lab4.html",
+      "lab5.html",
+      "responsive-scaling.js",
+      "server.js",
+      "manifest.json",
+      "package.json",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico",
+      "artifactName": "Matrix-UI-Heat-Transfer-Setup-${version}.${ext}"
+    }
+  }
+}

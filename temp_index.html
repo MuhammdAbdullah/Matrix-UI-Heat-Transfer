@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix Stirling Engine</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="assets/site.webmanifest">
+  <!-- Tailwind v4 + DaisyUI v5 compiled output -->
+  <link rel="stylesheet" href="assets/css/app.css">
+  <style>
+    @font-face {
+      font-family: 'Azonix';
+      src: url('assets/Azonix.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+  </style>
+
+  <!-- Theme bridge: runs immediately so data-theme is set before first paint -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.className = 'theme-' + saved;
+        var obs = new MutationObserver(function () {
+          var dark = document.body.classList.contains('theme-dark');
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        });
+        obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      });
+    })();
+  </script>
+</head>
+<body class="theme-dark">
+
+  <!-- =====================================================
+       APP SHELL — DaisyUI drawer layout
+       ===================================================== -->
+  <div class="flex flex-col h-screen overflow-hidden">
+
+    <!-- NAVBAR — sits above the drawer so it is always fully visible -->
+    <div class="navbar bg-base-100 border-b border-base-300 min-h-12 px-3.5 shrink-0 gap-3">
+      <div class="navbar-start gap-2.5 min-w-0">
+        <label for="drawer-toggle" class="btn btn-ghost btn-sm drawer-button" aria-label="Toggle sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </label>
+        <img id="app-logo" src="assets/Matrix 2024 White_Thermodynamics.png" alt="Matrix" class="h-[26px] w-auto object-contain shrink-0">
+      </div>
+
+      <div class="navbar-center">
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="font-bold text-base-content tracking-wider uppercase" style="font-family:'Azonix',sans-serif;font-size:1.5rem;letter-spacing:0.12em;">STIRLING ENGINE</span>
+          <div id="systemStatusBanner" class="badge badge-error badge-sm font-bold tracking-wider uppercase">
+            <span class="status-text">SYSTEM OFFLINE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-end">
+        <select id="themeSelector" class="select select-bordered select-xs max-w-24">
+          <option value="light">Light</option>
+          <option value="dark" selected>Dark</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Drawer covers only the area below the navbar -->
+    <div class="drawer flex-1 overflow-hidden relative">
+
+      <input id="drawer-toggle" type="checkbox" class="drawer-toggle">
+
+      <!-- ── MAIN DRAWER CONTENT ── -->
+      <div class="drawer-content flex flex-col h-full overflow-hidden min-w-0">
+
+        <!-- ── MAIN VIEW (hidden when admin panel is active) ── -->
+        <div id="main-view" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+
+        <!-- TAB BAR -->
+        <div id="main-tab-bar" class="flex items-stretch h-9 min-h-9 bg-base-200 border-b border-base-300 px-2.5 gap-0.5 shrink-0" role="tablist">
+          <button class="tab-btn tab-btn-active" data-tab="main" role="tab" aria-selected="true">Main App</button>
+          <button class="tab-btn" data-tab="curriculum" role="tab" aria-selected="false">Curriculum</button>
+        </div>
+
+      <!-- 3-PANEL BODY: charts (centre) + controls (right) -->
+      <div id="app-body" class="flex flex-1 overflow-hidden min-h-0">
+
+        <!-- ── CHARTS AREA ── -->
+        <div id="charts-area" class="flex-1 min-w-0 overflow-hidden flex flex-col">
+
+          <!-- PAGE: MAIN APP -->
+          <div id="page-main" class="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div id="charts-grid" class="flex-1 grid grid-cols-2 grid-rows-2 gap-1.5 p-1.5 min-h-0 overflow-hidden">
+
+              <!-- Top-left: P-V -->
+              <div id="pvContainer" class="bg-base-200 border border-base-300 rounded-lg relative overflow-hidden min-h-0 flex flex-col p-1">
+                <canvas id="pvChart"></canvas>
+                <div id="workDisplay" class="absolute top-1.5 right-2 bg-base-100/85 rounded px-2 py-0.5 text-[0.72rem] flex items-center gap-1 z-10">
+                  Work:&nbsp;<span id="workValue">--</span>
+                  <select id="workUnit" class="bg-base-100 text-base-content border-0 text-[0.72rem] cursor-pointer p-0 px-0.5">
+                    <option value="J">J</option>
+                    <option value="mJ">mJ</option>
+                    <option value="uJ">µJ</option>
+                  </select>
+                </div>
+                <div class="absolute top-1.5 left-2 bg-base-100/85 rounded px-2 py-0.5 text-[0.72rem] flex items-center gap-1 z-10">
+                  <span class="text-base-content/70">Points:</span>
+                  <select id="pvPointsSelect" class="bg-base-100 text-base-content border-0 text-[0.72rem] cursor-pointer p-0 px-0.5">
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="250" selected>250</option>
+                    <option value="500">500</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Top-right: Pressure vs Time -->
+              <div id="pressureTimeContainer" class="bg-base-200 border border-base-300 rounded-lg relative overflow-hidden min-h-0 flex flex-col p-1">
+                <canvas id="pressureTimeChart"></canvas>
+              </div>
+
+              <!-- Bottom-left: Temperature / RPM vs Time -->
+              <div id="tempRpmTimeContainer" class="bg-base-200 border border-base-300 rounded-lg relative overflow-hidden min-h-0 flex flex-col p-1">
+                <div class="flex items-center gap-1.5 text-[0.72rem] px-1 pt-0.5 shrink-0 text-base-content/70">
+                  <span>Time Graph:</span>
+                  <select id="timeSeriesMode" class="text-[0.72rem] px-1 py-px border border-base-300 rounded cursor-pointer bg-base-100 text-base-content">
+                    <option value="temperature">Temperature (°C)</option>
+                    <option value="rpm">RPM</option>
+                  </select>
+                </div>
+                <canvas id="tempRpmTimeChart"></canvas>
+              </div>
+
+              <!-- Bottom-right: Volume vs Time -->
+              <div id="volumeTimeContainer" class="bg-base-200 border border-base-300 rounded-lg relative overflow-hidden min-h-0 flex flex-col p-1">
+                <canvas id="volumeTimeChart"></canvas>
+              </div>
+
+            </div>
+          </div><!-- /#page-main -->
+
+          <!-- PAGE: CURRICULUM -->
+          <div id="page-curriculum" class="hidden flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5">
+
+              <div>
+                <h1 class="text-lg font-bold mb-1">Stirling Engine — Learning Module</h1>
+                <p class="text-[0.82rem]" style="color:oklch(var(--bc)/0.6);">Understand thermodynamic cycles through hands-on experimentation</p>
+              </div>
+
+              <div class="card bg-base-200 shadow-sm">
+                <div class="card-body p-5">
+                  <h2 class="card-title text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    What is a Stirling Engine?
+                  </h2>
+                  <p style="font-size:0.88rem;line-height:1.65;color:oklch(var(--bc)/0.8);">
+                    A Stirling engine is an external combustion engine that converts heat energy into mechanical work through cyclic compression and expansion of a working gas (air).
+                    Unlike internal combustion engines, the heat source is external — making it able to run on any heat source including solar, waste heat, or a flame.
+                    The engine in this unit uses an electric heater to supply heat to one end, while the other end is cooled by the environment.
+                  </p>
+                  <div class="divider my-1"></div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+                    <div style="padding:12px;background:oklch(var(--b1));border-radius:8px;border:1px solid oklch(var(--b3));">
+                      <div style="font-size:0.7rem;color:oklch(var(--bc)/0.5);">Working fluid</div>
+                      <div style="font-size:1.2rem;font-weight:700;">Air</div>
+                      <div style="font-size:0.75rem;color:oklch(var(--bc)/0.5);">Sealed internal gas</div>
+                    </div>
+                    <div style="padding:12px;background:oklch(var(--b1));border-radius:8px;border:1px solid oklch(var(--b3));">
+                      <div style="font-size:0.7rem;color:oklch(var(--bc)/0.5);">Heat source</div>
+                      <div style="font-size:1.2rem;font-weight:700;">20–70°C</div>
+                      <div style="font-size:0.75rem;color:oklch(var(--bc)/0.5);">Electric heater setpoint</div>
+                    </div>
+                    <div style="padding:12px;background:oklch(var(--b1));border-radius:8px;border:1px solid oklch(var(--b3));">
+                      <div style="font-size:0.7rem;color:oklch(var(--bc)/0.5);">Cycle type</div>
+                      <div style="font-size:1.2rem;font-weight:700;">Stirling</div>
+                      <div style="font-size:0.75rem;color:oklch(var(--bc)/0.5);">Closed regenerative cycle</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card bg-base-200 shadow-sm">
+                <div class="card-body p-5">
+                  <h2 class="card-title text-secondary">The Thermodynamic Cycle</h2>
+                  <p style="font-size:0.88rem;color:oklch(var(--bc)/0.7);margin-bottom:12px;">
+                    The ideal Stirling cycle consists of four processes. You can observe each phase in the live P-V diagram on the Main App tab.
+                  </p>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">1</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Isothermal Expansion</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">The gas expands at constant temperature, absorbing heat from the hot source. Volume increases, pressure decreases.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">2</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Isochoric Cooling</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Gas passes through the regenerator, depositing heat. Volume stays constant; temperature and pressure fall.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">3</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Isothermal Compression</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Gas is compressed at constant temperature, rejecting heat to the cold sink. Volume decreases, pressure rises.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">4</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Isochoric Heating</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Gas absorbs heat stored in the regenerator at constant volume. Temperature and pressure increase without work.</p></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card bg-base-200 shadow-sm">
+                <div class="card-body p-5">
+                  <h2 class="card-title text-accent">Reading the Live P-V Diagram</h2>
+                  <p style="font-size:0.88rem;line-height:1.65;color:oklch(var(--bc)/0.8);">
+                    The P-V (Pressure–Volume) diagram plots gas pressure on the Y-axis against cylinder volume on the X-axis in real time.
+                    The area enclosed by one cycle loop equals the <strong>net work output</strong> of the engine — displayed as the "Work" value in the chart corner.
+                    A larger, rounder loop means more work per cycle. Watch how changing the heater setpoint and load affects the shape.
+                  </p>
+                  <div class="alert alert-info mt-3" style="font-size:0.82rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Tip: Switch to the <strong>Main App</strong> tab and raise the heater setpoint to 60°C to see a well-developed P-V loop.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card bg-base-200 shadow-sm">
+                <div class="card-body p-5">
+                  <h2 class="card-title">Controls Guide</h2>
+                  <div class="flex flex-col gap-2.5">
+                    <div class="flex gap-3 items-start">
+                      <div class="badge badge-primary whitespace-nowrap shrink-0">Heater ON/OFF</div>
+                      <p style="font-size:0.83rem;margin:0;color:oklch(var(--bc)/0.8);">Enables or disables the heater element. The elapsed time counter tracks total heater-on time for your experiment log.</p>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="badge badge-secondary whitespace-nowrap shrink-0">Heater Setpoint</div>
+                      <p style="font-size:0.83rem;margin:0;color:oklch(var(--bc)/0.8);">Target heater temperature (20–70°C). The hardware uses an on/off controller to maintain this temperature.</p>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="badge badge-accent whitespace-nowrap shrink-0">Load Control</div>
+                      <p style="font-size:0.83rem;margin:0;color:oklch(var(--bc)/0.8);">Applies electrical load (0–100%) to the engine's generator, changing the mechanical resistance. Higher load = slower RPM = more torque.</p>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="badge badge-ghost badge-outline whitespace-nowrap shrink-0">Sweep</div>
+                      <p style="font-size:0.83rem;margin:0;color:oklch(var(--bc)/0.8);">Automatically ramps load from 0% to 100% in configurable steps and intervals — useful for generating a load-response curve.</p>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="badge badge-warning whitespace-nowrap shrink-0">CSV Save</div>
+                      <p style="font-size:0.83rem;margin:0;color:oklch(var(--bc)/0.8);">Records all sensor data (pressure, volume, RPM, temperature) with timestamps to a CSV file for analysis in Excel or Python.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card bg-base-200 shadow-sm">
+                <div class="card-body p-5">
+                  <h2 class="card-title">Experiment Procedure</h2>
+                  <div class="flex flex-col gap-2">
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">1</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Connect the Hardware</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Connect the USB cable. The status banner should change from <em>OFFLINE</em> to <em>ONLINE</em>. The unit auto-detects by VID/PID.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">2</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Set Heater Setpoint</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Use the slider or input to set a temperature (e.g., 50°C). Click <strong>Heater ON</strong> and wait 2–3 minutes for the engine to reach steady state.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">3</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Start CSV Recording</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Click <strong>Start CSV Save</strong> and choose a filename. The button turns green while recording.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">4</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Run the Load Sweep</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Set Sweep Step to 5% and Interval to 500ms. Click <strong>Start Sweep</strong>. Observe how RPM, pressure, and work change as load increases.</p></div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                      <div class="w-[26px] h-[26px] min-w-[26px] rounded-full flex items-center justify-center text-[0.78rem] font-bold shrink-0" style="background:oklch(var(--p));color:oklch(var(--pc));">5</div>
+                      <div><h4 class="text-[0.83rem] font-semibold mb-1 mt-0.5">Record Results</h4><p style="font-size:0.80rem;margin:0;color:oklch(var(--bc)/0.72);line-height:1.55;">Stop CSV Save when the sweep completes. Open the CSV in Excel. Plot RPM vs Load and Work vs Load to find the maximum power point.</p></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div><!-- /#page-curriculum -->
+
+        </div><!-- /.charts-area -->
+
+
+        <!-- ── RIGHT CONTROLS PANEL ── -->
+        <div id="right-panel" class="w-[360px] min-w-[360px] bg-base-200 border-l border-base-300 overflow-y-auto shrink-0 flex flex-col py-2">
+
+          <!-- LIVE READINGS -->
+          <div class="px-3.5 py-2.5 border-b border-base-300">
+            <p class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-base-content/40 mt-0 mb-2">Live Readings</p>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div class="bg-base-100 border border-base-300 rounded-md p-1.5 flex flex-col items-center text-center gap-0">
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">Temperature</span>
+                <span id="tempValue" class="text-[1.22rem] font-bold text-base-content leading-tight">--</span>
+                <span id="tempUnitLabel" class="text-[0.60rem] text-base-content/50 leading-tight">°C</span>
+              </div>
+              <div class="bg-base-100 border border-base-300 rounded-md p-1.5 flex flex-col items-center text-center gap-0">
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">Power</span>
+                <span id="powerValue" class="text-[1.22rem] font-bold text-base-content leading-tight">--</span>
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">W</span>
+              </div>
+              <div class="bg-base-100 border border-base-300 rounded-md p-1.5 flex flex-col items-center text-center gap-0">
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">RPM</span>
+                <span id="rpmValue" class="text-[1.22rem] font-bold text-base-content leading-tight">--</span>
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">&nbsp;</span>
+              </div>
+              <div class="bg-base-100 border border-base-300 rounded-md p-1.5 flex flex-col items-center text-center gap-0">
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">Heater Time</span>
+                <span id="heaterElapsedTime" class="font-bold text-base-content leading-tight" style="font-size:1rem;">0.000</span>
+                <span class="text-[0.60rem] text-base-content/50 leading-tight">s</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- HEATER SETPOINT -->
+          <div class="px-3.5 py-2.5 border-b border-base-300">
+            <p class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-base-content/40 mt-0 mb-2">Heater Setpoint Control</p>
+
+            <button id="heaterToggle" class="btn btn-sm btn-outline btn-success w-full mb-2.5">
+              Heater ON
+            </button>
+
+            <div class="heater-slider-wrapper mb-1" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;">
+              <input id="heaterSlider" type="range" min="20" max="70" value="20" class="range range-primary range-sm" style="width:100%;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="text" id="heaterValue" class="input input-bordered text-right text-[0.85rem]" style="width:52px;" value="20">
+                <span class="text-[0.78rem] text-base-content/52">°C</span>
+              </div>
+            </div>
+
+            <div class="flex justify-between text-[0.59rem] text-base-content/40 mb-1.5" style="padding-right:80px">
+              <span>20°C</span><span>45°C</span><span>70°C</span>
+            </div>
+          </div>
+
+          <!-- LOAD CONTROL -->
+          <div class="px-3.5 py-2.5 border-b border-base-300">
+            <p class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-base-content/40 mt-0 mb-2">Load Control</p>
+
+            <div class="slider-wrapper mb-1" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;">
+              <input id="auxSlider" type="range" min="0" max="100" value="0" class="range range-secondary range-sm" style="width:100%;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="text" id="auxValue" class="input input-bordered text-right text-[0.85rem]" style="width:52px;" value="0">
+                <span class="text-[0.78rem] text-base-content/52">%</span>
+              </div>
+            </div>
+
+            <div class="flex justify-between text-[0.59rem] text-base-content/40 mb-1.5" style="padding-right:80px">
+              <span>0%</span><span>50%</span><span>100%</span>
+            </div>
+          </div>
+
+          <!-- SWEEP -->
+          <div class="px-3.5 py-2.5 border-b border-base-300">
+            <p class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-base-content/40 mt-0 mb-2">Sweep 0–100%</p>
+
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <div class="flex flex-col gap-0.5">
+                <label for="sweepStep" class="text-[0.63rem] text-base-content/50">Step</label>
+                <input id="sweepStep" type="number" min="1" max="20" value="5" class="input input-bordered w-full text-[0.80rem]">
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <label for="sweepInterval" class="text-[0.63rem] text-base-content/50">Interval (ms)</label>
+                <input id="sweepInterval" type="number" min="50" value="200" class="input input-bordered w-full text-[0.80rem]">
+              </div>
+            </div>
+
+            <button id="sweepToggle" class="btn btn-sm btn-outline w-full">Start Sweep</button>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="px-3.5 py-2.5">
+            <p class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-base-content/40 mt-0 mb-2">Actions</p>
+            <div class="flex gap-1.5 items-center mb-1.5">
+              <button id="csvToggle" class="btn btn-sm csv-idle flex-1">Start CSV Save</button>
+              <button id="calibrationButton" class="btn btn-sm btn-outline">Calibrate</button>
+            </div>
+            <button id="clearButton" class="btn btn-sm btn-outline btn-warning w-full">Clear Graphs</button>
+          </div>
+
+        </div><!-- /.right-panel -->
+
+      </div><!-- /.se-app-body -->
+
+      </div><!-- /#main-view -->
+
+
+      <!-- ═══════════════════════════════════════════════════════════
+           ADMIN PANEL — embedded, navigated to via IPC (not a new window)
+           ═══════════════════════════════════════════════════════════ -->
+      <div id="page-admin" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+
+        <!-- Admin Tab Bar -->
+        <div class="bg-base-200 border-b border-base-300 flex-shrink-0 px-2 py-1">
+          <div class="flex flex-wrap items-center gap-y-1">
+            <button id="adminBackBtn" class="btn btn-sm btn-primary gap-1 flex-shrink-0 mr-2">← Main App</button>
+            <button class="tab-button btn btn-ghost btn-sm rounded-none border-b-2 border-primary active whitespace-nowrap"
+                    onclick="switchAdminTab('dashboard', this)">📊 Dashboard</button>
+            <button class="tab-button btn btn-ghost btn-sm rounded-none border-b-2 border-transparent whitespace-nowrap"
+                    onclick="switchAdminTab('bootloader', this)">🔧 Bootloader</button>
+            <button class="tab-button btn btn-ghost btn-sm rounded-none border-b-2 border-transparent whitespace-nowrap"
+                    onclick="switchAdminTab('updates', this)">🔄 Updates</button>
+            <button class="tab-button btn btn-ghost btn-sm rounded-none border-b-2 border-transparent whitespace-nowrap"
+                    onclick="switchAdminTab('settings', this)">⚙️ Settings</button>
+          </div>
+        </div>
+
+        <!-- Tab Content Wrapper -->
+        <div class="flex-1 overflow-hidden flex flex-col">
+
+          <!-- DASHBOARD TAB -->
+          <div id="dashboardTab" class="tab-content active p-4 gap-4">
+            <div class="grid grid-cols-2 gap-4 flex-1 min-h-0">
+              <!-- System Log -->
+              <div class="card bg-base-200 shadow flex flex-col min-h-0">
+                <div class="card-body p-3 gap-2 flex flex-col flex-1 min-h-0">
+                  <div class="flex items-center justify-between flex-shrink-0">
+                    <h3 class="font-semibold text-sm">📋 System Log</h3>
+                    <div class="flex gap-1">
+                      <button class="btn btn-xs btn-ghost" onclick="adminClearLog()">🗑 Clear</button>
+                      <button class="btn btn-xs btn-ghost" onclick="adminExportLog()">💾 Export</button>
+                    </div>
+                  </div>
+                  <div id="adminLogContainer" class="log-scroll bg-base-300 rounded p-2 flex-1 min-h-0 overflow-y-auto">
+                    <div class="log-entry">
+                      <span class="log-timestamp">[Ready]</span>
+                      <span class="log-info"> Admin panel initialised</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Raw Data Stream -->
+              <div class="card bg-base-200 shadow flex flex-col min-h-0">
+                <div class="card-body p-3 gap-2 flex flex-col flex-1 min-h-0">
+                  <div class="flex items-center justify-between flex-shrink-0">
+                    <h3 class="font-semibold text-sm">📡 Raw Data Stream</h3>
+                    <div class="flex gap-1">
+                      <button class="btn btn-xs btn-ghost" onclick="clearRawData()">🗑 Clear</button>
+                      <button class="btn btn-xs btn-ghost" onclick="exportRawData()">💾 Export</button>
+                    </div>
+                  </div>
+                  <div id="rawDataContainer" class="log-scroll bg-base-300 rounded p-2 flex-1 min-h-0 overflow-y-auto">
+                    <div class="raw-data-entry">
+                      <span class="log-timestamp">[Waiting for serial data…]</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /dashboardTab -->
+
+          <!-- BOOTLOADER TAB -->
+          <div id="bootloaderTab" class="tab-content p-4 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="card bg-base-200 shadow">
+                <div class="card-body gap-4">
+                  <h2 class="card-title text-base border-b border-base-300 pb-3">📡 Communication Settings</h2>
+                  <div class="space-y-2">
+                    <h3 class="font-semibold text-sm">USB</h3>
+                    <div class="flex items-center gap-2">
+                      <label class="label-text w-10 flex-shrink-0">VID:</label>
+                      <input type="text" id="usbVidInput" value="0x12BF" placeholder="0x12BF"
+                             class="input input-bordered input-sm flex-1 font-mono">
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <label class="label-text w-10 flex-shrink-0">PID:</label>
+                      <input type="text" id="usbPidInput" value="0x00A1" placeholder="0x00A1"
+                             class="input input-bordered input-sm flex-1 font-mono">
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="usbEnableCheck" checked
+                             class="checkbox checkbox-sm checkbox-primary">
+                      <span class="label-text">Enable</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="card bg-base-200 shadow">
+                <div class="card-body gap-4">
+                  <h2 class="card-title text-base border-b border-base-300 pb-3">🔧 Bootloader Actions</h2>
+                  <div class="grid grid-cols-3 gap-2">
+                    <button class="btn btn-sm btn-outline" id="loadHexBtn" onclick="loadHexFile()" disabled>Load Hex File</button>
+                    <button class="btn btn-sm btn-success" id="runAppBtn" onclick="runApplication()" disabled>Run Application</button>
+                    <button class="btn btn-sm btn-error col-span-2" id="eraseProgVerifyBtn" onclick="eraseProgramVerify()" disabled>Erase-Program-Verify</button>
+                    <button class="btn btn-sm btn-outline" id="connectBtn" onclick="connectBootloader()" disabled>Connect</button>
+                    <button class="btn btn-sm btn-outline col-span-3" id="triggerBootloaderBtn" onclick="triggerBootloader()">Trigger Bootloader</button>
+                  </div>
+                  <div id="firmwareProgressSection" class="space-y-2" style="display:none;">
+                    <div class="text-xs font-bold text-center" id="firmwareProgressLabel">Initialising…</div>
+                    <progress class="progress progress-success w-full h-5" id="firmwareProgressFill" value="0" max="100"></progress>
+                    <div class="text-xs font-bold text-center" id="firmwareProgressText">0%</div>
+                  </div>
+                  <div class="bg-base-300 rounded p-2 border-l-4 border-success">
+                    <span class="file-path-label" id="hexFilePathLabel">No hex file loaded</span>
+                  </div>
+                  <div class="log-scroll bg-base-300 rounded p-2 h-48 overflow-y-auto">
+                    <div id="bootloaderLog"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /bootloaderTab -->
+
+          <!-- UPDATES TAB -->
+          <div id="updatesTab" class="tab-content p-4 space-y-4">
+            <div class="card bg-base-200 shadow max-w-lg">
+              <div class="card-body gap-4">
+                <h2 class="card-title text-base border-b border-base-300 pb-3">🔄 Check for Updates</h2>
+                <div class="bg-base-300 rounded p-3 border-l-4 border-success space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <strong>Current Version:</strong>
+                    <span id="currentVersionDisplay" class="font-mono">Loading…</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <strong>Status:</strong>
+                    <span id="updateStatusDisplay" class="opacity-70">Ready to check</span>
+                  </div>
+                </div>
+                <div id="updateStatusMessage" style="display:none;">
+                  <div class="text-sm leading-relaxed" id="updateStatusContent"></div>
+                </div>
+                <div id="updateProgressSection" style="display:none;" class="space-y-1">
+                  <progress class="progress progress-primary w-full" id="updateProgressFill" value="0" max="100"></progress>
+                  <span class="text-xs font-bold text-center block" id="updateProgressText">0%</span>
+                </div>
+                <button class="btn btn-primary btn-sm w-full" id="checkUpdateBtn" onclick="checkForUpdates()">🔄 Check for Updates</button>
+              </div>
+            </div>
+          </div><!-- /updatesTab -->
+
+          <!-- SETTINGS TAB -->
+          <div id="settingsTab" class="tab-content p-4 space-y-4">
+            <div class="flex flex-col gap-4 max-w-sm">
+              <div class="card bg-base-200 shadow">
+                <div class="card-body gap-4">
+                  <h2 class="card-title text-base border-b border-base-300 pb-3">🌡️ Temperature Unit</h2>
+                  <p class="text-xs text-base-content/60">
+                    Select the unit used for all temperature displays. The setting is saved and applied
+                    immediately to the main app readings.
+                  </p>
+                  <div class="flex flex-col gap-3">
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-base-300 hover:bg-base-100 transition-colors">
+                      <input type="radio" name="tempUnit" value="C" class="radio radio-primary"
+                             onchange="setTemperatureUnit(this.value)">
+                      <div>
+                        <div class="font-semibold text-sm">Celsius (°C)</div>
+                        <div class="text-xs opacity-60">Heater range: 20 °C – 70 °C</div>
+                      </div>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-base-300 hover:bg-base-100 transition-colors">
+                      <input type="radio" name="tempUnit" value="F" class="radio radio-primary"
+                             onchange="setTemperatureUnit(this.value)">
+                      <div>
+                        <div class="font-semibold text-sm">Fahrenheit (°F)</div>
+                        <div class="text-xs opacity-60">Heater range: 68 °F – 158 °F</div>
+                      </div>
+                    </label>
+                  </div>
+                  <p class="text-xs text-base-content/50">
+                    Only the live temperature reading is converted — heater setpoint controls remain in °C
+                    (hardware requirement).
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div><!-- /settingsTab -->
+
+        </div><!-- /tab content wrapper -->
+
+      </div><!-- /#page-admin -->
+
+    </div><!-- /.drawer-content -->
+
+    <!-- ── SIDEBAR (drawer-side) ── -->
+    <div class="drawer-side z-30">
+      <label for="drawer-toggle" class="drawer-overlay"></label>
+      <aside id="se-sidebar" class="bg-base-200 border-r border-base-300 w-[218px] min-h-full flex flex-col">
+        <ul class="menu p-2 flex-1 overflow-y-auto gap-0.5">
+          <li class="menu-title text-[0.64rem] tracking-widest">Navigation</li>
+
+          <li id="nav-main">
+            <a class="nav-item active text-[0.81rem]" data-page="main">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Main App
+            </a>
+          </li>
+
+          <li id="nav-curriculum">
+            <a class="nav-item text-[0.81rem]" data-page="curriculum">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              Curriculum
+            </a>
+          </li>
+
+          <li class="divider my-1"></li>
+          <li class="menu-title text-[0.64rem] tracking-widest">System</li>
+
+          <li id="adminButton">
+            <a class="nav-item text-[0.81rem]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Admin Panel
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </div>
+
+    </div><!-- /.drawer -->
+
+  </div><!-- /.app-shell -->
+
+
+  <!-- =========================================================
+       MODALS (renderer.js uses classList.add/remove('show'))
+       ========================================================= -->
+
+  <div id="passwordModal" class="password-modal">
+    <div class="bg-base-100 border border-base-300 rounded-xl p-6 min-w-[300px] max-w-[90vw] flex flex-col gap-3">
+      <h3 class="text-base font-bold m-0">Admin Access</h3>
+      <p class="m-0 text-[0.84rem] text-base-content/70">Enter password to access the admin panel:</p>
+      <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="current-password"
+             class="input input-bordered w-full">
+      <div class="flex justify-end gap-2">
+        <button id="passwordCancelBtn" class="btn btn-ghost btn-sm">Cancel</button>
+        <button id="passwordSubmitBtn" class="btn btn-primary btn-sm">Submit</button>
+      </div>
+      <div id="passwordError" class="text-error text-[0.80rem] text-center" style="display:none;">Incorrect password!</div>
+    </div>
+  </div>
+
+  <div id="calibrationModal" class="password-modal">
+    <div class="bg-base-100 border border-base-300 rounded-xl p-6 min-w-[300px] max-w-[90vw] flex flex-col gap-3">
+      <h3 class="text-base font-bold m-0">Calibration</h3>
+      <input type="text" id="calibrationValue" readonly placeholder="Waiting for data..."
+             class="input input-bordered w-full">
+      <div class="flex justify-end gap-2">
+        <button id="zeroButton" class="btn btn-info btn-sm">Zero</button>
+        <button id="doneButton" class="btn btn-success btn-sm">Done</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================
+       HIDDEN ELEMENTS (renderer.js references these IDs)
+       ========================================================= -->
+  <div style="display:none;" aria-hidden="true">
+    <span id="statusText">Ready</span>
+    <span id="dataCount">0</span>
+    <span id="currentTemp">--°C</span>
+    <span id="debugStatus">OFF</span>
+  </div>
+
+
+  <!-- =========================================================
+       INLINE SCRIPTS: tabs, sidebar nav, theme
+       ========================================================= -->
+  <style>
+    /* Constrain sidebar to the content area below the navbar.
+       DaisyUI defaults drawer-side to position:fixed (full viewport).
+       Overriding to absolute makes it relative to the .drawer container,
+       which sits below the navbar in the flex column. */
+    .drawer.relative .drawer-side {
+      position: absolute;
+      height: 100%;
+    }
+
+    /* Hide burger button and block sidebar when admin panel is active */
+    [data-admin-mode="true"] .drawer-button { display: none !important; }
+    [data-admin-mode="true"] .drawer-side   { display: none !important; }
+
+    /* Tab bar buttons — not a DaisyUI component, hand-rolled to match design */
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-size: 0.79rem;
+      font-weight: 500;
+      color: oklch(var(--bc) / 0.52);
+      padding: 0 14px;
+      transition: color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+    }
+    .tab-btn:hover { color: oklch(var(--bc)); }
+    .tab-btn-active { color: oklch(var(--p)); border-bottom-color: oklch(var(--p)); }
+
+    /* Nav item active state inside DaisyUI menu */
+    .nav-item.active {
+      background: oklch(var(--p) / 0.14) !important;
+      color: oklch(var(--p)) !important;
+    }
+
+    /* ── Admin panel: tab content panels ── */
+    .tab-content               { display: none; }
+    .tab-content.active        { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+    #bootloaderTab.active,
+    #updatesTab.active,
+    #settingsTab.active        { overflow-y: auto; }
+
+    .tab-button.active {
+      border-bottom-color: oklch(var(--p)) !important;
+      color: oklch(var(--p));
+      font-weight: 600;
+    }
+
+    /* ── Admin log colours ── */
+    .log-timestamp { color: oklch(var(--bc)/0.40); }
+    .log-info      { color: oklch(var(--bc)/0.80); }
+    .log-success   { color: oklch(var(--su, 0.7 0.2 150)); }
+    .log-warning   { color: oklch(var(--wa, 0.8 0.18 80)); }
+    .log-error     { color: oklch(var(--er, 0.65 0.22 25)); }
+
+    .log-scroll {
+      overflow-y: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.73rem;
+      line-height: 1.6;
+    }
+    .log-entry { padding: 1px 0; }
+
+    .raw-data-entry { padding: 1px 0; border-bottom: 1px solid oklch(var(--b3)/0.25); }
+    .raw-data-hex   { color: oklch(var(--p)); }
+    .raw-data-ascii { color: oklch(var(--s, 0.7 0.2 200)); }
+
+    .bootloader-log-entry         { padding: 2px 0; font-family: 'Courier New', Courier, monospace; font-size: 0.73rem; color: oklch(var(--bc)/0.80); }
+    .bootloader-log-entry.success { color: oklch(var(--su, 0.7 0.2 150)); }
+    .bootloader-log-entry.error   { color: oklch(var(--er, 0.65 0.22 25)); }
+    .bootloader-log-entry.warning { color: oklch(var(--wa, 0.8 0.18 80)); }
+
+    .file-path-label          { font-family: 'Courier New', Courier, monospace; font-size: 0.73rem; color: oklch(var(--bc)/0.45); word-break: break-all; }
+    .file-path-label.has-file { color: oklch(var(--su, 0.7 0.2 150)); }
+
+    .update-status-message         { border-radius: 0.5rem; padding: 0.75rem; }
+    .update-status-message.info    { background: oklch(var(--in, 0.7 0.18 230)/0.12); border-left: 3px solid oklch(var(--in, 0.7 0.18 230)); }
+    .update-status-message.success { background: oklch(var(--su, 0.7 0.2 150)/0.12); border-left: 3px solid oklch(var(--su, 0.7 0.2 150)); }
+    .update-status-message.error   { background: oklch(var(--er, 0.65 0.22 25)/0.12);  border-left: 3px solid oklch(var(--er, 0.65 0.22 25)); }
+
+    /* ── Navbar: < 1200px ── */
+    @media (max-width: 1199px) {
+      /* Navbar wraps into 2 rows; relative so logo can be centred absolutely */
+      .navbar {
+        flex-wrap: wrap;
+        min-height: auto;
+        padding-top: 8px;
+        padding-bottom: 0;
+        row-gap: 4px;
+        position: relative;
+      }
+
+      /* Row 1: full-width forces a line break so row 2 items can't join this row */
+      .navbar > .navbar-start {
+        order: 1;
+        flex: 0 0 100%;
+      }
+
+      /* Logo: pulled out of flow and centred horizontally on row 1 */
+      #app-logo {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 11px;
+      }
+
+      /* Row 2: full-width so STIRLING ENGINE is truly centred (not offset by Dark▼ width) */
+      .navbar > .navbar-center {
+        order: 2;
+        flex: 0 0 100%;
+        justify-content: center;
+        padding-bottom: 8px;
+      }
+
+      /* Dark/Light: pulled out of flow, pinned to bottom-right of navbar — aligns with SYSTEM ONLINE */
+      .navbar > .navbar-end {
+        position: absolute;
+        right: 14px;
+        bottom: 8px;
+      }
+    }
+
+    /* ── Navbar: < 450px — burger moves to SYSTEM ONLINE level ── */
+    @media (max-width: 449px) {
+      .drawer-button {
+        position: absolute;
+        left: 14px;
+        bottom: 8px;
+      }
+      /* Without the in-flow burger, navbar-start collapses to 0 height and
+         row 2 (STIRLING ENGINE) rises up to overlap the logo. min-height keeps row 1 open. */
+      .navbar > .navbar-start {
+        min-height: 40px;
+      }
+    }
+
+    /* ── Shared: all widths < 1300px — single-column chart stack ── */
+    @media (max-width: 1299px) {
+
+      /* page-main: let stacked charts expand naturally */
+      #page-main {
+        overflow: visible;
+        flex: none;
+      }
+
+      /* Charts grid: single column */
+      #charts-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        overflow: visible;
+        flex: none;
+        min-height: 0;
+      }
+
+      /* PV chart: square — height driven by width via aspect-ratio */
+      #pvContainer {
+        aspect-ratio: 1 / 1;
+        height: auto;
+        min-height: 0;
+        max-height: none;
+        order: 1;
+      }
+
+      /* Other charts: fixed height prevents Chart.js resize loop */
+      #pressureTimeContainer { height: 300px; min-height: 300px; max-height: 300px; order: 2; }
+      #volumeTimeContainer   { height: 300px; min-height: 300px; max-height: 300px; order: 3; }
+      #tempRpmTimeContainer  { height: 300px; min-height: 300px; max-height: 300px; order: 4; }
+    }
+
+    /* ── 900–1299px: panel stays on right, charts area scrolls internally ── */
+    @media (min-width: 900px) and (max-width: 1299px) {
+      #charts-area {
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+    }
+
+    /* ── Below 900px: panel moves above charts, whole page scrolls ── */
+    @media (max-width: 899px) {
+
+      #app-body {
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      #charts-area {
+        overflow: visible;
+        flex: none;
+        width: 100%;
+      }
+
+      #right-panel {
+        width: 100%;
+        min-width: 0;
+        order: -1;
+        border-left: none;
+        border-bottom: 1px solid oklch(var(--b3));
+        flex-shrink: 0;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      // ── Tab switching ──
+      var tabs = document.querySelectorAll('.tab-btn');
+      var pages = { main: document.getElementById('page-main'), curriculum: document.getElementById('page-curriculum') };
+      var navItems = { main: document.getElementById('nav-main'), curriculum: document.getElementById('nav-curriculum') };
+
+      function switchTab(tab) {
+        tabs.forEach(function (btn) {
+          var active = btn.getAttribute('data-tab') === tab;
+          btn.classList.toggle('tab-btn-active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        Object.keys(pages).forEach(function (key) {
+          pages[key].classList.toggle('hidden', key !== tab);
+        });
+        Object.keys(navItems).forEach(function (key) {
+          if (navItems[key]) {
+            var anchor = navItems[key].querySelector('.nav-item');
+            if (anchor) anchor.classList.toggle('active', key === tab);
+          }
+        });
+      }
+
+      tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
+      });
+
+      ['main', 'curriculum'].forEach(function (key) {
+        var li = navItems[key];
+        if (li) {
+          li.addEventListener('click', function () {
+            switchTab(key);
+            var toggle = document.getElementById('drawer-toggle');
+            if (toggle) toggle.checked = false;
+          });
+        }
+      });
+
+      // Close sidebar when admin button is clicked
+      var adminNavBtn = document.getElementById('adminButton');
+      if (adminNavBtn) {
+        adminNavBtn.addEventListener('click', function () {
+          var toggle = document.getElementById('drawer-toggle');
+          if (toggle) toggle.checked = false;
+        });
+      }
+
+      // ── Theme selector ──
+      var themeSel = document.getElementById('themeSelector');
+      function applyTheme(theme) {
+        document.body.className = 'theme-' + theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        var logoSrc = theme === 'dark'
+          ? 'assets/Matrix 2024 White_Thermodynamics.png'
+          : 'assets/Matrix 2024_Thermodynamics.png';
+        ['app-logo', 'admin-logo'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.src = logoSrc;
+        });
+        if (themeSel && themeSel.value !== theme) {
+          themeSel.value = theme;
+          themeSel.dispatchEvent(new Event('change'));
+        }
+      }
+      if (themeSel) {
+        themeSel.value = localStorage.getItem('theme') || 'dark';
+        themeSel.addEventListener('change', function () { applyTheme(themeSel.value); });
+      }
+
+      // ── Initial state ──
+      switchTab('main');
+      applyTheme(localStorage.getItem('theme') || 'dark');
+
+      // ── Admin panel navigation (same-window embed) ──
+      var mainView  = document.getElementById('main-view');
+      var adminPage = document.getElementById('page-admin');
+
+      function showAdmin() {
+        if (mainView)  mainView.classList.add('hidden');
+        if (adminPage) adminPage.classList.remove('hidden');
+        var toggle = document.getElementById('drawer-toggle');
+        if (toggle) toggle.checked = false;
+        document.documentElement.setAttribute('data-admin-mode', 'true');
+      }
+
+      window.adminGoBack = function () {
+        if (adminPage) adminPage.classList.add('hidden');
+        if (mainView)  mainView.classList.remove('hidden');
+        document.documentElement.removeAttribute('data-admin-mode');
+      };
+
+      if (window.electronAPI && window.electronAPI.onNavigateToAdmin) {
+        window.electronAPI.onNavigateToAdmin(function () { showAdmin(); });
+      }
+
+      // ── Temperature unit conversion (setting saved by admin panel) ──
+      (function () {
+        var tempEl   = document.getElementById('tempValue');
+        var labelEl  = document.getElementById('tempUnitLabel');
+        var lastConverted = null;   // last value we wrote; prevents infinite loop
+
+        function getUnit() { return localStorage.getItem('temp-unit') || 'C'; }
+
+        function applyUnit() {
+          if (!labelEl) return;
+          labelEl.textContent = getUnit() === 'F' ? '°F' : '°C';
+        }
+
+        if (tempEl) {
+          var observer = new MutationObserver(function () {
+            var unit = getUnit();
+            var current = tempEl.textContent;
+            if (unit === 'F' && current !== '--' && current !== lastConverted) {
+              var c = parseFloat(current);
+              if (!isNaN(c)) {
+                lastConverted = (c * 9 / 5 + 32).toFixed(1);
+                tempEl.textContent = lastConverted;
+              }
+            } else if (unit === 'C') {
+              lastConverted = null;
+            }
+            applyUnit();
+          });
+          observer.observe(tempEl, { childList: true, characterData: true, subtree: true });
+        }
+
+        // React immediately when the admin window changes the setting
+        window.addEventListener('storage', function (e) {
+          if (e.key === 'temp-unit') { lastConverted = null; applyUnit(); }
+        });
+
+        applyUnit();
+      })();
+    })();
+  </script>
+
+
+  <!-- =========================================================
+       CHART.JS + RENDERER LOADING
+       ========================================================= -->
+  <script>
+    (function () {
+      var script1 = document.createElement('script');
+      script1.src = 'node_modules/chart.js/dist/chart.umd.js';
+      script1.onerror = function () {
+        var script2 = document.createElement('script');
+        script2.src = 'assets/lib/chart.min.js';
+        script2.onload = function () { loadRemainingScripts(); };
+        script2.onerror = function () {
+          alert('Error: Chart.js library failed to load. The app may not work correctly.');
+        };
+        document.head.appendChild(script2);
+      };
+      script1.onload = function () { loadRemainingScripts(); };
+      document.head.appendChild(script1);
+
+      function loadRemainingScripts() {
+        var parserScript = document.createElement('script');
+        parserScript.src = 'stirling-data-parser.js';
+        parserScript.onload = function () {
+          var rendererScript = document.createElement('script');
+          rendererScript.src = 'renderer.js';
+          rendererScript.onload = function () {
+            var adminScript = document.createElement('script');
+            adminScript.src = 'admin.js';
+            document.body.appendChild(adminScript);
+          };
+          document.body.appendChild(rendererScript);
+        };
+        document.body.appendChild(parserScript);
+      }
+    })();
+  </script>
+
+</body>
+</html>

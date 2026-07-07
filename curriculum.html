@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Transfer Curriculum</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    
+    <style>
+        html {
+            font-size: 16px; /* Base size - will be scaled automatically */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Minimal theme variables to match overall app */
+        :root {
+            --bg: #000000;
+            --text: #ffffff;
+            --panel: #333333;
+            --border: #444444;
+            --accent: #2ed573;
+            --chart-bg: #1a1a1a;
+            --chart-border: #444444;
+            --chart-grid: #444444;
+            --chart-text: #000000;
+        }
+        body.theme-dark {
+            --bg: #000000;
+            --text: #ffffff;
+            --panel: #333333;
+            --border: #444444;
+            --accent: #2ed573;
+            --chart-bg: #1a1a1a;
+            --chart-border: #444444;
+            --chart-grid: #444444;
+            --chart-text: #eeeeee;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--bg, #000000);
+            padding: 1.25rem; /* Changed from 20px to rem */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem; /* Use rem units instead of fixed pixels */
+        }
+        
+        /* RTL (Right-to-Left) support for Arabic */
+        body.rtl,
+        body.rtl .container,
+        body.rtl .header,
+        body.rtl .content,
+        body.rtl .intro,
+        body.rtl .lab-card,
+        body.rtl .lab-card h2,
+        body.rtl .lab-card h3,
+        body.rtl .lab-card p,
+        body.rtl .lab-card .duration,
+        body.rtl .lab-card .topics,
+        body.rtl .footer {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        body.rtl .header {
+            text-align: center;
+        }
+        
+        body.rtl .language-selector {
+            right: auto;
+            left: 1.25rem;
+        }
+        
+        body.rtl .lab-card {
+            text-align: right;
+        }
+        
+        body.rtl .intro {
+            text-align: center;
+        }
+        
+        body.rtl table,
+        body.rtl .data-table,
+        body.rtl .data-table th,
+        body.rtl .data-table td {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        /* When lab is shown, remove padding and centering */
+        body.lab-mode {
+            padding: 0;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .container {
+            max-width: 62.5rem; /* Changed from 1000px to rem */
+            width: 100%;
+            background: var(--panel, #333);
+            border-radius: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.5); /* Changed from 0 20px 60px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* When lab is shown, container should fill the viewport */
+        .container.lab-mode {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: var(--panel, #333);
+            color: var(--text, #ffffff);
+            padding: 2.5rem; /* Changed from 40px to rem */
+            text-align: center;
+            position: relative;
+            border-bottom: 0.125rem solid var(--border, #444); /* Changed from 2px to rem */
+        }
+        
+        .header.hidden {
+            display: none;
+        }
+
+        .language-selector {
+            position: absolute;
+            top: 1.25rem; /* Changed from 20px to rem */
+            right: 1.25rem; /* Changed from 20px to rem */
+            z-index: 100;
+        }
+
+        .language-selector select {
+            padding: 0.625rem 0.9375rem; /* Changed from 10px 15px to rem */
+            font-size: 1em;
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            border: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            background: var(--chart-bg, #1a1a1a);
+            color: var(--text, #ffffff);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .language-selector select:hover {
+            background: var(--panel, #333);
+            border-color: var(--accent, #2ed573);
+        }
+
+        .language-selector select option {
+            background: var(--panel, #333);
+            color: var(--text, #ffffff);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            text-shadow: 0.125rem 0.125rem 0.25rem rgba(0, 0, 0, 0.5); /* Changed from 2px 2px 4px to rem */
+            color: var(--text, #ffffff);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+            color: var(--text, #ffffff);
+        }
+
+        .content {
+            padding: 2.5rem; /* Changed from 40px to rem */
+            background: var(--bg, #000);
+        }
+
+        .intro {
+            text-align: center;
+            margin-bottom: 2.5rem; /* Changed from 40px to rem */
+            color: var(--text, #ffffff);
+            opacity: 0.9;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        .labs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(18.75rem, 1fr)); /* Changed from 300px to rem */
+            gap: 1.5625rem; /* Changed from 25px to rem */
+            margin-bottom: 1.875rem; /* Changed from 30px to rem */
+        }
+
+        .lab-card {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.875rem; /* Changed from 30px to rem */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 0.1875rem solid var(--border, #444); /* Changed from 3px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 4px 15px to rem */
+        }
+
+        .lab-card:hover {
+            transform: translateY(-0.3125rem); /* Changed from -5px to rem */
+            border-color: var(--accent, #2ed573);
+            box-shadow: 0 0.75rem 2.5rem rgba(46, 213, 115, 0.4); /* Changed from 0 8px 25px to rem */
+        }
+
+        .lab-card .icon {
+            font-size: 3em;
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+        }
+
+        .lab-card h2 {
+            color: var(--accent, #2ed573);
+            font-size: 1.5em;
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .lab-card h3 {
+            color: var(--text, #ffffff);
+            opacity: 0.9;
+            font-size: 1.2em;
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            font-weight: normal;
+        }
+
+        .lab-card p {
+            color: var(--text, #ffffff);
+            opacity: 0.8;
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+        }
+
+        .lab-card .duration {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent, #2ed573) 0%, #1e90ff 100%);
+            color: white;
+            padding: 0.3125rem 0.9375rem; /* Changed from 5px 15px to rem */
+            border-radius: 1.25rem; /* Changed from 20px to rem */
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .lab-card .topics {
+            margin-top: 0.9375rem; /* Changed from 15px to rem */
+            font-size: 0.9em;
+            color: var(--text, #ffffff);
+            opacity: 0.7;
+        }
+
+        .lab-card1 { border-top: 0.3125rem solid #2ed573; } /* Changed from 5px to rem */
+        .lab-card2 { border-top: 0.3125rem solid #f093fb; } /* Changed from 5px to rem */
+        .lab-card3 { border-top: 0.3125rem solid #4facfe; } /* Changed from 5px to rem */
+        .lab-card4 { border-top: 0.3125rem solid #43e97b; } /* Changed from 5px to rem */
+        .lab-card5 { border-top: 0.3125rem solid #fa709a; } /* Changed from 5px to rem */
+
+        .footer {
+            text-align: center;
+            padding: 1.25rem; /* Changed from 20px to rem */
+            color: var(--text, #ffffff);
+            opacity: 0.8;
+            font-size: 0.9em;
+            background: var(--panel, #333);
+            border-top: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        /* Lab viewer container */
+        #labViewer {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        #labIframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: var(--bg, #000000);
+        }
+
+        /* Back button */
+        .back-button {
+            position: absolute;
+            top: 1.25rem;
+            left: 1.25rem;
+            z-index: 1000;
+            background: var(--accent, #2ed573);
+            color: var(--text, #ffffff);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #25b85f;
+            transform: translateY(-2px);
+            box-shadow: 0 0.375rem 1.25rem rgba(0, 0, 0, 0.4);
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+        }
+
+        /* Hide curriculum content when lab is shown */
+        .curriculum-content {
+            display: block;
+        }
+
+        .curriculum-content.hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .labs-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="container">
+        <div class="header">
+            <!-- Language Selector -->
+            <div class="language-selector">
+                <select id="languageSelector">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                </select>
+            </div>
+
+            <h1 data-translate="pageTitle">📚 Heat Transfer Curriculum</h1>
+            <p data-translate="pageSubtitle">Interactive Labs & Learning Modules</p>
+        </div>
+
+        <!-- Lab viewer (hidden by default) -->
+        <div id="labViewer">
+            <button class="back-button" onclick="goBackToCurriculum()">← Back</button>
+            <iframe id="labIframe" src=""></iframe>
+        </div>
+
+        <!-- Curriculum content -->
+        <div class="content curriculum-content" id="curriculumContent">
+            <div class="intro">
+                <p data-translate="introText">
+                    Welcome to the Heat Transfer Curriculum! Select a lab below to explore fundamental 
+                    concepts, perform interactive calculations, and test your understanding. Each lab 
+                    includes theory, calculators, quizzes, and experiments designed for your apparatus.
+                </p>
+            </div>
+
+            <div class="labs-grid">
+                <!-- Lab 1 -->
+                <div class="lab-card lab-card1" onclick="openLab('lab1.html')">
+                    <div class="icon">🔥</div>
+                    <h2 data-translate="lab1Title">Lab 1</h2>
+                    <h3 data-translate="lab1Subtitle">Introduction to Heat Transfer</h3>
+                    <p data-translate="lab1Desc">Learn the three fundamental modes of heat transfer: conduction, convection, and radiation. Includes interactive calculators and real-world examples.</p>
+                    <div class="duration" data-translate="lab1Duration">⏱️ 45 mins</div>
+                    <div class="topics" data-translate="lab1Topics">Topics: Conduction • Convection • Radiation • Formulas</div>
+                </div>
+
+                <!-- Lab 2 -->
+                <div class="lab-card lab-card2" onclick="openLab('lab2.html')">
+                    <div class="icon">📐</div>
+                    <h2 data-translate="lab2Title">Lab 2</h2>
+                    <h3 data-translate="lab2Subtitle">Temperature Gradients</h3>
+                    <p data-translate="lab2Desc">Understand how temperature changes with distance and calculate temperature gradients. Analyze multi-sensor data from your apparatus.</p>
+                    <div class="duration" data-translate="lab2Duration">⏱️ 40 mins</div>
+                    <div class="topics" data-translate="lab2Topics">Topics: Gradients • Temperature Profiles • Data Analysis</div>
+                </div>
+
+                <!-- Lab 3 -->
+                <div class="lab-card lab-card3" onclick="openLab('lab3.html')">
+                    <div class="icon">🧱</div>
+                    <h2 data-translate="lab3Title">Lab 3</h2>
+                    <h3 data-translate="lab3Subtitle">Thermal Resistance</h3>
+                    <p data-translate="lab3Desc">Explore thermal resistance and R-values. Learn about series and parallel thermal circuits, just like electrical circuits!</p>
+                    <div class="duration" data-translate="lab3Duration">⏱️ 50 mins</div>
+                    <div class="topics" data-translate="lab3Topics">Topics: R-values • Thermal Circuits • Insulation • Multi-Layer</div>
+                </div>
+
+                <!-- Lab 4 -->
+                <div class="lab-card lab-card4" onclick="openLab('lab4.html')">
+                    <div class="icon">💨</div>
+                    <h2 data-translate="lab4Title">Lab 4</h2>
+                    <h3 data-translate="lab4Subtitle">Forced vs Natural Convection</h3>
+                    <p data-translate="lab4Desc">Compare natural and forced convection heat transfer. Experiment with different fan speeds and observe the effects on cooling rates.</p>
+                    <div class="duration" data-translate="lab4Duration">⏱️ 55 mins</div>
+                    <div class="topics" data-translate="lab4Topics">Topics: Natural Convection • Forced Convection • h coefficient</div>
+                </div>
+
+                <!-- Lab 5 -->
+                <div class="lab-card lab-card5" onclick="openLab('lab5.html')">
+                    <div class="icon">📊</div>
+                    <h2 data-translate="lab5Title">Lab 5</h2>
+                    <h3 data-translate="lab5Subtitle">Data Analysis & Graphing</h3>
+                    <p data-translate="lab5Desc">Learn professional data analysis techniques: statistics, linear regression, error analysis, and how to write lab reports.</p>
+                    <div class="duration" data-translate="lab5Duration">⏱️ 60 mins</div>
+                    <div class="topics" data-translate="lab5Topics">Topics: Statistics • Regression • Graphing • Report Writing</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer curriculum-content" id="curriculumFooter">
+            <p data-translate="footerTip">💡 Tip: Complete labs in order for the best learning experience!</p>
+            <p data-translate="footerDesc">Each lab includes theory, interactive tools, quizzes, and hands-on experiments.</p>
+        </div>
+    </div>
+
+    <script>
+        // Translation data for all languages
+        var translations = {
+            en: {
+                pageTitle: '📚 Heat Transfer Curriculum',
+                pageSubtitle: 'Interactive Labs & Learning Modules',
+                introText: 'Welcome to the Heat Transfer Curriculum! Select a lab below to explore fundamental concepts, perform interactive calculations, and test your understanding. Each lab includes theory, calculators, quizzes, and experiments designed for your apparatus.',
+                lab1Title: 'Lab 1',
+                lab1Subtitle: 'Introduction to Heat Transfer',
+                lab1Desc: 'Learn the three fundamental modes of heat transfer: conduction, convection, and radiation. Includes interactive calculators and real-world examples.',
+                lab1Duration: '⏱️ 45 mins',
+                lab1Topics: 'Topics: Conduction • Convection • Radiation • Formulas',
+                lab2Title: 'Lab 2',
+                lab2Subtitle: 'Temperature Gradients',
+                lab2Desc: 'Understand how temperature changes with distance and calculate temperature gradients. Analyze multi-sensor data from your apparatus.',
+                lab2Duration: '⏱️ 40 mins',
+                lab2Topics: 'Topics: Gradients • Temperature Profiles • Data Analysis',
+                lab3Title: 'Lab 3',
+                lab3Subtitle: 'Thermal Resistance',
+                lab3Desc: 'Explore thermal resistance and R-values. Learn about series and parallel thermal circuits, just like electrical circuits!',
+                lab3Duration: '⏱️ 50 mins',
+                lab3Topics: 'Topics: R-values • Thermal Circuits • Insulation • Multi-Layer',
+                lab4Title: 'Lab 4',
+                lab4Subtitle: 'Forced vs Natural Convection',
+                lab4Desc: 'Compare natural and forced convection heat transfer. Experiment with different fan speeds and observe the effects on cooling rates.',
+                lab4Duration: '⏱️ 55 mins',
+                lab4Topics: 'Topics: Natural Convection • Forced Convection • h coefficient',
+                lab5Title: 'Lab 5',
+                lab5Subtitle: 'Data Analysis & Graphing',
+                lab5Desc: 'Learn professional data analysis techniques: statistics, linear regression, error analysis, and how to write lab reports.',
+                lab5Duration: '⏱️ 60 mins',
+                lab5Topics: 'Topics: Statistics • Regression • Graphing • Report Writing',
+                footerTip: '💡 Tip: Complete labs in order for the best learning experience!',
+                footerDesc: 'Each lab includes theory, interactive tools, quizzes, and hands-on experiments.'
+            },
+            fr: {
+                pageTitle: '📚 Programme de Transfert Thermique',
+                pageSubtitle: 'Laboratoires Interactifs et Modules d\'Apprentissage',
+                introText: 'Bienvenue au Programme de Transfert Thermique! Sélectionnez un laboratoire ci-dessous pour explorer les concepts fondamentaux, effectuer des calculs interactifs et tester votre compréhension. Chaque laboratoire comprend la théorie, des calculatrices, des quiz et des expériences conçues pour votre appareil.',
+                lab1Title: 'Laboratoire 1',
+                lab1Subtitle: 'Introduction au Transfert Thermique',
+                lab1Desc: 'Apprenez les trois modes fondamentaux de transfert thermique: conduction, convection et rayonnement. Comprend des calculatrices interactives et des exemples réels.',
+                lab1Duration: '⏱️ 45 minutes',
+                lab1Topics: 'Sujets: Conduction • Convection • Rayonnement • Formules',
+                lab2Title: 'Laboratoire 2',
+                lab2Subtitle: 'Gradients de Température',
+                lab2Desc: 'Comprenez comment la température change avec la distance et calculez les gradients de température. Analysez les données multi-capteurs de votre appareil.',
+                lab2Duration: '⏱️ 40 minutes',
+                lab2Topics: 'Sujets: Gradients • Profils de Température • Analyse de Données',
+                lab3Title: 'Laboratoire 3',
+                lab3Subtitle: 'Résistance Thermique',
+                lab3Desc: 'Explorez la résistance thermique et les valeurs R. Découvrez les circuits thermiques en série et en parallèle, comme les circuits électriques!',
+                lab3Duration: '⏱️ 50 minutes',
+                lab3Topics: 'Sujets: Valeurs R • Circuits Thermiques • Isolation • Multi-Couches',
+                lab4Title: 'Laboratoire 4',
+                lab4Subtitle: 'Convection Forcée vs Naturelle',
+                lab4Desc: 'Comparez le transfert de chaleur par convection naturelle et forcée. Expérimentez avec différentes vitesses de ventilateur et observez les effets sur les taux de refroidissement.',
+                lab4Duration: '⏱️ 55 minutes',
+                lab4Topics: 'Sujets: Convection Naturelle • Convection Forcée • Coefficient h',
+                lab5Title: 'Laboratoire 5',
+                lab5Subtitle: 'Analyse de Données et Graphiques',
+                lab5Desc: 'Apprenez les techniques professionnelles d\'analyse de données: statistiques, régression linéaire, analyse d\'erreurs et rédaction de rapports de laboratoire.',
+                lab5Duration: '⏱️ 60 minutes',
+                lab5Topics: 'Sujets: Statistiques • Régression • Graphiques • Rédaction de Rapports',
+                footerTip: '💡 Conseil: Complétez les laboratoires dans l\'ordre pour la meilleure expérience d\'apprentissage!',
+                footerDesc: 'Chaque laboratoire comprend la théorie, des outils interactifs, des quiz et des expériences pratiques.'
+            },
+            de: {
+                pageTitle: '📚 Wärmeübertragung Lehrplan',
+                pageSubtitle: 'Interaktive Labore und Lernmodule',
+                introText: 'Willkommen zum Wärmeübertragung Lehrplan! Wählen Sie unten ein Labor aus, um grundlegende Konzepte zu erkunden, interaktive Berechnungen durchzuführen und Ihr Verständnis zu testen. Jedes Labor enthält Theorie, Rechner, Quiz und Experimente, die für Ihr Gerät entwickelt wurden.',
+                lab1Title: 'Labor 1',
+                lab1Subtitle: 'Einführung in die Wärmeübertragung',
+                lab1Desc: 'Lernen Sie die drei grundlegenden Arten der Wärmeübertragung: Leitung, Konvektion und Strahlung. Enthält interaktive Rechner und reale Beispiele.',
+                lab1Duration: '⏱️ 45 Minuten',
+                lab1Topics: 'Themen: Leitung • Konvektion • Strahlung • Formeln',
+                lab2Title: 'Labor 2',
+                lab2Subtitle: 'Temperaturgradienten',
+                lab2Desc: 'Verstehen Sie, wie sich die Temperatur mit der Entfernung ändert, und berechnen Sie Temperaturgradienten. Analysieren Sie Multi-Sensor-Daten von Ihrem Gerät.',
+                lab2Duration: '⏱️ 40 Minuten',
+                lab2Topics: 'Themen: Gradienten • Temperaturprofile • Datenanalyse',
+                lab3Title: 'Labor 3',
+                lab3Subtitle: 'Thermischer Widerstand',
+                lab3Desc: 'Erforschen Sie thermischen Widerstand und R-Werte. Lernen Sie über Serien- und Parallelthermische Schaltungen, genau wie elektrische Schaltungen!',
+                lab3Duration: '⏱️ 50 Minuten',
+                lab3Topics: 'Themen: R-Werte • Thermische Schaltungen • Isolierung • Mehrschichtig',
+                lab4Title: 'Labor 4',
+                lab4Subtitle: 'Erzwungene vs Natürliche Konvektion',
+                lab4Desc: 'Vergleichen Sie natürliche und erzwungene Konvektionswärmeübertragung. Experimentieren Sie mit verschiedenen Lüftergeschwindigkeiten und beobachten Sie die Auswirkungen auf die Kühlraten.',
+                lab4Duration: '⏱️ 55 Minuten',
+                lab4Topics: 'Themen: Natürliche Konvektion • Erzwungene Konvektion • h-Koeffizient',
+                lab5Title: 'Labor 5',
+                lab5Subtitle: 'Datenanalyse und Diagramme',
+                lab5Desc: 'Lernen Sie professionelle Datenanalysetechniken: Statistik, lineare Regression, Fehleranalyse und wie man Laborberichte schreibt.',
+                lab5Duration: '⏱️ 60 Minuten',
+                lab5Topics: 'Themen: Statistik • Regression • Diagramme • Berichtsschreiben',
+                footerTip: '💡 Tipp: Absolvieren Sie die Labore der Reihe nach für die beste Lernerfahrung!',
+                footerDesc: 'Jedes Labor enthält Theorie, interaktive Werkzeuge, Quiz und praktische Experimente.'
+            },
+            es: {
+                pageTitle: '📚 Plan de Estudios de Transferencia de Calor',
+                pageSubtitle: 'Laboratorios Interactivos y Módulos de Aprendizaje',
+                introText: '¡Bienvenido al Plan de Estudios de Transferencia de Calor! Seleccione un laboratorio a continuación para explorar conceptos fundamentales, realizar cálculos interactivos y probar su comprensión. Cada laboratorio incluye teoría, calculadoras, cuestionarios y experimentos diseñados para su aparato.',
+                lab1Title: 'Laboratorio 1',
+                lab1Subtitle: 'Introducción a la Transferencia de Calor',
+                lab1Desc: 'Aprenda los tres modos fundamentales de transferencia de calor: conducción, convección y radiación. Incluye calculadoras interactivas y ejemplos del mundo real.',
+                lab1Duration: '⏱️ 45 minutos',
+                lab1Topics: 'Temas: Conducción • Convección • Radiación • Fórmulas',
+                lab2Title: 'Laboratorio 2',
+                lab2Subtitle: 'Gradientes de Temperatura',
+                lab2Desc: 'Comprenda cómo cambia la temperatura con la distancia y calcule gradientes de temperatura. Analice datos de múltiples sensores de su aparato.',
+                lab2Duration: '⏱️ 40 minutos',
+                lab2Topics: 'Temas: Gradientes • Perfiles de Temperatura • Análisis de Datos',
+                lab3Title: 'Laboratorio 3',
+                lab3Subtitle: 'Resistencia Térmica',
+                lab3Desc: 'Explore la resistencia térmica y los valores R. ¡Aprenda sobre circuitos térmicos en serie y paralelo, como los circuitos eléctricos!',
+                lab3Duration: '⏱️ 50 minutos',
+                lab3Topics: 'Temas: Valores R • Circuitos Térmicos • Aislamiento • Múltiples Capas',
+                lab4Title: 'Laboratorio 4',
+                lab4Subtitle: 'Convección Forzada vs Natural',
+                lab4Desc: 'Compare la transferencia de calor por convección natural y forzada. Experimente con diferentes velocidades de ventilador y observe los efectos en las tasas de enfriamiento.',
+                lab4Duration: '⏱️ 55 minutos',
+                lab4Topics: 'Temas: Convección Natural • Convección Forzada • Coeficiente h',
+                lab5Title: 'Laboratorio 5',
+                lab5Subtitle: 'Análisis de Datos y Gráficos',
+                lab5Desc: 'Aprenda técnicas profesionales de análisis de datos: estadísticas, regresión lineal, análisis de errores y cómo escribir informes de laboratorio.',
+                lab5Duration: '⏱️ 60 minutos',
+                lab5Topics: 'Temas: Estadísticas • Regresión • Gráficos • Redacción de Informes',
+                footerTip: '💡 Consejo: ¡Complete los laboratorios en orden para obtener la mejor experiencia de aprendizaje!',
+                footerDesc: 'Cada laboratorio incluye teoría, herramientas interactivas, cuestionarios y experimentos prácticos.'
+            },
+            ar: {
+                pageTitle: '📚 منهج انتقال الحرارة',
+                pageSubtitle: 'معامل تفاعلية ووحدات تعليمية',
+                introText: 'مرحباً بك في منهج انتقال الحرارة! اختر معمل أدناه لاستكشاف المفاهيم الأساسية، وإجراء حسابات تفاعلية، واختبار فهمك. يتضمن كل معمل النظرية والآلات الحاسبة والاختبارات والتجارب المصممة لجهازك.',
+                lab1Title: 'المعمل 1',
+                lab1Subtitle: 'مقدمة في انتقال الحرارة',
+                lab1Desc: 'تعلم الأنواع الثلاثة الأساسية لانتقال الحرارة: التوصيل والحمل والإشعاع. يتضمن آلات حاسبة تفاعلية وأمثلة من العالم الحقيقي.',
+                lab1Duration: '⏱️ 45 دقيقة',
+                lab1Topics: 'المواضيع: التوصيل • الحمل • الإشعاع • الصيغ',
+                lab2Title: 'المعمل 2',
+                lab2Subtitle: 'تدرجات درجة الحرارة',
+                lab2Desc: 'افهم كيف تتغير درجة الحرارة مع المسافة واحسب تدرجات درجة الحرارة. حلل بيانات متعددة المستشعرات من جهازك.',
+                lab2Duration: '⏱️ 40 دقيقة',
+                lab2Topics: 'المواضيع: التدرجات • ملفات درجة الحرارة • تحليل البيانات',
+                lab3Title: 'المعمل 3',
+                lab3Subtitle: 'المقاومة الحرارية',
+                lab3Desc: 'استكشف المقاومة الحرارية وقيم R. تعلم عن الدوائر الحرارية المتسلسلة والمتوازية، تماماً مثل الدوائر الكهربائية!',
+                lab3Duration: '⏱️ 50 دقيقة',
+                lab3Topics: 'المواضيع: قيم R • الدوائر الحرارية • العزل • متعدد الطبقات',
+                lab4Title: 'المعمل 4',
+                lab4Subtitle: 'الحمل القسري مقابل الطبيعي',
+                lab4Desc: 'قارن انتقال الحرارة بالحمل الطبيعي والقسري. جرب سرعات مروحة مختلفة ولاحظ التأثيرات على معدلات التبريد.',
+                lab4Duration: '⏱️ 55 دقيقة',
+                lab4Topics: 'المواضيع: الحمل الطبيعي • الحمل القسري • معامل h',
+                lab5Title: 'المعمل 5',
+                lab5Subtitle: 'تحليل البيانات والرسم البياني',
+                lab5Desc: 'تعلم تقنيات تحليل البيانات الاحترافية: الإحصاء، الانحدار الخطي، تحليل الأخطاء، وكيفية كتابة تقارير المختبر.',
+                lab5Duration: '⏱️ 60 دقيقة',
+                lab5Topics: 'المواضيع: الإحصاء • الانحدار • الرسم البياني • كتابة التقارير',
+                footerTip: '💡 نصيحة: أكمل المعامل بالترتيب للحصول على أفضل تجربة تعليمية!',
+                footerDesc: 'يتضمن كل معمل النظرية والأدوات التفاعلية والاختبارات والتجارب العملية.'
+            }
+        };
+
+        // Function to change the language of the page
+        function changeLanguage(languageCode) {
+            // Get the translations for the selected language
+            var languageTranslations = translations[languageCode];
+            
+            // Find all elements with data-translate attribute
+            var elementsToTranslate = document.querySelectorAll('[data-translate]');
+            
+            // Loop through each element and change its text
+            for (var i = 0; i < elementsToTranslate.length; i++) {
+                var element = elementsToTranslate[i];
+                var translationKey = element.getAttribute('data-translate');
+                var translatedText = languageTranslations[translationKey];
+                
+                if (translatedText) {
+                    element.textContent = translatedText;
+                }
+            }
+            
+            // Add or remove RTL class for Arabic
+            if (languageCode === 'ar') {
+                document.body.classList.add('rtl');
+                document.documentElement.setAttribute('dir', 'rtl');
+                document.documentElement.setAttribute('lang', 'ar');
+            } else {
+                document.body.classList.remove('rtl');
+                document.documentElement.setAttribute('dir', 'ltr');
+                document.documentElement.setAttribute('lang', languageCode);
+            }
+            
+            // Save the selected language to localStorage
+            localStorage.setItem('selectedLanguage', languageCode);
+        }
+
+        // Function to load the saved language when page loads
+        function loadSavedLanguage() {
+            // Get the saved language from localStorage
+            var savedLanguage = localStorage.getItem('selectedLanguage');
+            
+            // If there is a saved language, use it
+            if (savedLanguage) {
+                document.getElementById('languageSelector').value = savedLanguage;
+                changeLanguage(savedLanguage);
+            }
+        }
+
+        // Function to open a lab in the same window
+        function openLab(labFile) {
+            // Hide curriculum content and header
+            var header = document.querySelector('.header');
+            var curriculumContent = document.getElementById('curriculumContent');
+            var curriculumFooter = document.getElementById('curriculumFooter');
+            if (header) {
+                header.classList.add('hidden');
+            }
+            if (curriculumContent) {
+                curriculumContent.classList.add('hidden');
+            }
+            if (curriculumFooter) {
+                curriculumFooter.classList.add('hidden');
+            }
+            
+            // Add lab-mode class to body and container
+            document.body.classList.add('lab-mode');
+            var container = document.querySelector('.container');
+            if (container) {
+                container.classList.add('lab-mode');
+            }
+            
+            // Show lab viewer
+            var labViewer = document.getElementById('labViewer');
+            var labIframe = document.getElementById('labIframe');
+            if (labViewer && labIframe) {
+                labIframe.src = labFile;
+                labViewer.style.display = 'block';
+            }
+        }
+
+        // Function to go back to curriculum
+        function goBackToCurriculum() {
+            // Hide lab viewer
+            var labViewer = document.getElementById('labViewer');
+            var labIframe = document.getElementById('labIframe');
+            if (labViewer) {
+                labViewer.style.display = 'none';
+            }
+            if (labIframe) {
+                labIframe.src = ''; // Clear iframe source
+            }
+            
+            // Remove lab-mode class from body and container
+            document.body.classList.remove('lab-mode');
+            var container = document.querySelector('.container');
+            if (container) {
+                container.classList.remove('lab-mode');
+            }
+            
+            // Show curriculum content and header
+            var header = document.querySelector('.header');
+            var curriculumContent = document.getElementById('curriculumContent');
+            var curriculumFooter = document.getElementById('curriculumFooter');
+            if (header) {
+                header.classList.remove('hidden');
+            }
+            if (curriculumContent) {
+                curriculumContent.classList.remove('hidden');
+            }
+            if (curriculumFooter) {
+                curriculumFooter.classList.remove('hidden');
+            }
+        }
+
+        // When the page loads, load the saved language
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSavedLanguage();
+            
+            // Add event listener to language selector
+            document.getElementById('languageSelector').addEventListener('change', function() {
+                var selectedLanguage = this.value;
+                changeLanguage(selectedLanguage);
+            });
+        });
+    </script>
+    
+    <!-- Load Responsive Scaling Script -->
+</body>
+</html>

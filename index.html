@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net;">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Matrix Thermodynamics Heat Transfer</title>
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+        <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+        <link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+        <link rel="manifest" href="assets/site.webmanifest">
+
+        <!-- DaisyUI + Tailwind CSS (compiled from Stirling Engine app) -->
+        <link rel="stylesheet" href="assets/css/app.css">
+
+        <style>
+            @font-face {
+                font-family: 'Azonix';
+                src: url('assets/Azonix.otf') format('opentype');
+            }
+
+            /* ── Active button state (heater mode, fan presets, cooler) ── */
+            .btn.active {
+                background: oklch(var(--p)) !important;
+                color: oklch(var(--pc)) !important;
+                border-color: oklch(var(--p)) !important;
+            }
+
+            /* ── System status badge ── */
+            #systemStatusIndicator.online {
+                background-color: oklch(var(--su) / 1) !important;
+                border-color: oklch(var(--su) / 1) !important;
+                color: white !important;
+            }
+            #systemStatusIndicator.offline {
+                background-color: oklch(var(--er) / 1) !important;
+                border-color: oklch(var(--er) / 1) !important;
+                color: white !important;
+            }
+
+            /* ── Nav item active ── */
+            .nav-item.active {
+                background: oklch(var(--p) / 0.14) !important;
+                color: oklch(var(--p)) !important;
+            }
+
+            /* ── Slider fill divs: kept for JS compat but hidden visually ── */
+            #fanSliderFill, #heaterSliderFill,
+            #fanThumbIcon, #heaterThumbIcon {
+                display: none !important;
+            }
+
+            /* ── Slider tooltip ── */
+            .slider-tooltip {
+                position: absolute;
+                top: -2rem;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 0.72rem;
+                font-weight: bold;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.2s;
+                z-index: 10;
+                white-space: nowrap;
+            }
+            .ht-slider-pos:hover .slider-tooltip {
+                opacity: 1;
+            }
+
+            /* ── Chart containers ── */
+            #testChart {
+                display: block;
+                width: 100% !important;
+                height: 100% !important;
+            }
+            #tempDistanceChart {
+                display: block;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* ── CSV saving button pulse ── */
+            .csv-saving {
+                animation: csvPulse 1.2s ease-in-out infinite;
+                background: oklch(var(--su)) !important;
+                color: oklch(var(--suc)) !important;
+                border-color: oklch(var(--su)) !important;
+            }
+            @keyframes csvPulse {
+                0%, 100% { opacity: 1; }
+                50%       { opacity: 0.65; }
+            }
+
+
+            /* ── Tab bar ── */
+            .tab-btn {
+                background: transparent;
+                border: none;
+                border-bottom: 2px solid transparent;
+                cursor: pointer;
+                font-size: 0.79rem;
+                font-weight: 500;
+                color: oklch(var(--bc) / 0.52);
+                padding: 0 14px;
+                transition: color 0.2s, border-color 0.2s;
+                white-space: nowrap;
+                align-self: stretch;
+                display: flex;
+                align-items: center;
+            }
+            .tab-btn:hover { color: oklch(var(--bc)); }
+            .tab-btn-active { color: oklch(var(--p)); border-bottom-color: oklch(var(--p)); }
+
+            /* ── Received data compact fields ── */
+            .rd-field {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .rd-label {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: oklch(var(--bc) / 0.75);
+                white-space: nowrap;
+            }
+            .tile-val {
+                min-width: 104px;
+                height: 48px;
+                padding: 0 16px;
+                border: 1px solid oklch(var(--b3));
+                border-radius: 6px;
+                background: oklch(var(--b1));
+                color: oklch(var(--bc));
+                font-size: 1.15rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                white-space: nowrap;
+            }
+
+            /* ── Right panel section headings ── */
+            .rp-section-title {
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                color: oklch(var(--bc) / 0.45);
+                margin: 0 0 12px 0;
+            }
+
+            /* ── Right panel: larger buttons and inputs ── */
+            #right-panel .btn {
+                min-height: 38px;
+                font-size: 0.81rem;
+                font-weight: 700;
+            }
+            #right-panel .mode-btn-row {
+                display: grid;
+                gap: 8px;
+                margin-bottom: 14px;
+            }
+            #right-panel .mode-btn-row.three-col {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            #right-panel .slider-row {
+                display: grid;
+                grid-template-columns: 1fr 82px;
+                gap: 10px;
+                align-items: center;
+                margin-top: 4px;
+            }
+            #right-panel .slider-num {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            #right-panel .slider-num input {
+                width: 60px;
+                height: 38px;
+                text-align: center;
+                font-size: 0.875rem;
+                font-weight: 700;
+            }
+            #right-panel .range-labels {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.7rem;
+                color: oklch(var(--bc) / 0.4);
+                margin-top: 4px;
+                padding-right: 88px;
+            }
+            #right-panel .graph-btn {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            #right-panel .graph-btn:last-child {
+                margin-bottom: 0;
+            }
+
+            /* ── Minimum button / input sizes (global) ── */
+            .btn-sm {
+                min-height: 32px;
+                font-size: 0.75rem;
+            }
+
+            /* ── Responsive: collapse right panel on small screens ── */
+            @media (max-width: 1200px) {
+                #right-panel {
+                    width: 320px !important;
+                    min-width: 300px !important;
+                }
+            }
+            @media (max-width: 900px) {
+                #app-body {
+                    flex-direction: column;
+                }
+                #right-panel {
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    border-left: none;
+                    border-top: 1px solid oklch(var(--b3));
+                }
+            }
+
+            /* ── Navbar: < 1200px — wraps into 2 rows ── */
+            @media (max-width: 1199px) {
+                .navbar {
+                    flex-wrap: wrap;
+                    min-height: auto;
+                    padding-top: 8px;
+                    padding-bottom: 0;
+                    row-gap: 4px;
+                    position: relative;
+                }
+                .navbar > .navbar-start {
+                    order: 1;
+                    flex: 0 0 100%;
+                }
+                #app-logo {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    top: 11px;
+                }
+                .navbar > .navbar-center {
+                    order: 2;
+                    flex: 0 0 100%;
+                    justify-content: center;
+                    padding-bottom: 8px;
+                }
+                .navbar > .navbar-end {
+                    position: absolute;
+                    right: 14px;
+                    bottom: 8px;
+                }
+            }
+
+            /* ── Sidebar: pinned by default, collapses on toggle ── */
+            #ht-sidebar {
+                width: 218px;
+                flex-shrink: 0;
+                overflow: hidden;
+                transition: width 0.3s ease-out;
+            }
+            #ht-sidebar.collapsed {
+                width: 0;
+            }
+        </style>
+
+        <!-- Theme bootstrap: apply saved theme before first paint -->
+        <script>
+            (function () {
+                var saved = localStorage.getItem('theme') || 'dark';
+                document.documentElement.setAttribute('data-theme', saved);
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.body.classList.add('theme-' + saved);
+                    var obs = new MutationObserver(function () {
+                        var isDark = document.body.classList.contains('theme-dark');
+                        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                    });
+                    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+                });
+            })();
+        </script>
+    </head>
+
+    <body class="theme-dark">
+
+        <!-- Hidden web-mode connect button (used by renderer.js in web/tablet mode) -->
+        <button id="webConnectBtn" style="display:none;"></button>
+
+        <div class="flex flex-col h-screen overflow-hidden">
+
+            <!-- ════════════════════════════════════════════════ NAVBAR ════ -->
+            <div class="navbar bg-base-100 border-b border-base-300 min-h-12 px-3.5 shrink-0 gap-3">
+                <div class="navbar-start gap-2.5 min-w-0">
+                    <button id="sidebarToggle" class="btn btn-ghost btn-sm" aria-label="Toggle sidebar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <img id="app-logo" src="assets/Matrix 2024 White_Thermodynamics.png" alt="Matrix"
+                         class="h-[26px] w-auto object-contain shrink-0">
+                </div>
+
+                <div class="navbar-center">
+                    <div class="flex flex-col items-center gap-0.5">
+                        <span class="font-bold text-base-content tracking-wider uppercase"
+                              style="font-family:'Azonix',Arial,sans-serif;font-size:1.5rem;letter-spacing:0.12em;">
+                            HEAT TRANSFER
+                        </span>
+                        <div id="systemStatusIndicator"
+                             class="badge badge-error badge-sm font-bold tracking-wider uppercase offline">
+                            SYSTEM OFFLINE
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navbar-end gap-3">
+                    <div class="text-xs text-base-content/60 hidden md:flex items-center gap-1">
+                        <span class="font-bold text-base-content/40">Last Update:</span>
+                        <span id="lastUpdate">Never</span>
+                    </div>
+                    <select id="themeSelector" class="select select-bordered select-xs max-w-24">
+                        <option value="light">Light</option>
+                        <option value="dark" selected>Dark</option>
+                    </select>
+                </div>
+            </div>
+            <!-- ══════════════════════════════════════════════ END NAVBAR ════ -->
+
+            <!-- ══════════════════════════════════════════════════ BODY ════ -->
+            <div class="flex flex-1 overflow-hidden">
+
+                <!-- ─────────────────────────────────────── SIDEBAR (pinned) ─── -->
+                <aside id="ht-sidebar" class="bg-base-200 border-r border-base-300 flex flex-col flex-shrink-0 overflow-hidden">
+                    <ul class="menu p-2 flex-1 overflow-y-auto gap-0.5">
+                        <li class="menu-title text-[0.64rem] tracking-widest">Navigation</li>
+
+                        <li>
+                            <a id="nav-main" class="nav-item active text-[0.81rem]">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                </svg>
+                                Main App
+                            </a>
+                        </li>
+
+                        <li>
+                            <a id="curriculumBtn" class="nav-item text-[0.81rem]" style="cursor:pointer;">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                                Curriculum
+                            </a>
+                        </li>
+
+                        <li class="divider my-1"></li>
+                        <li class="menu-title text-[0.64rem] tracking-widest">System</li>
+
+                        <li>
+                            <a id="adminBtn" class="nav-item text-[0.81rem]" style="cursor:pointer;">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                                Admin Panel
+                            </a>
+                        </li>
+                    </ul>
+                </aside>
+                <!-- ──────────────────────────────────────── END SIDEBAR ─── -->
+
+                <!-- ───────────────────────────── MAIN CONTENT (main app) ─── -->
+                <div class="flex flex-col flex-1 overflow-hidden min-w-0">
+
+                    <!-- APP BODY: centre panel + right controls panel -->
+                    <div id="app-body" class="flex flex-1 overflow-hidden min-h-0">
+
+                        <!-- ─────────────────────────── CENTRE: readings + charts ─── -->
+                        <div class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col p-2 gap-2">
+
+                            <!-- Received Data -->
+                            <div class="bg-base-200 border border-base-300 rounded-lg p-5">
+                                <p class="rp-section-title mb-4">Received Data</p>
+                                <!-- T1–T8 compact inline row -->
+                                <div class="flex flex-wrap gap-x-8 gap-y-4 mb-4">
+                                    <div id="t1" class="rd-field">
+                                        <span class="rd-label">T1</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t2" class="rd-field">
+                                        <span class="rd-label">T2</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t3" class="rd-field">
+                                        <span class="rd-label">T3</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t4" class="rd-field">
+                                        <span class="rd-label">T4</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t5" class="rd-field">
+                                        <span class="rd-label">T5</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t6" class="rd-field">
+                                        <span class="rd-label">T6</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t7" class="rd-field">
+                                        <span class="rd-label">T7</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="t8" class="rd-field">
+                                        <span class="rd-label">T8</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                </div>
+                                <!-- System readings compact inline row -->
+                                <div class="flex flex-wrap gap-x-8 gap-y-4">
+                                    <div id="heaterLeftTile" class="rd-field">
+                                        <span class="rd-label">Linear Heater</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="heaterRightTile" class="rd-field">
+                                        <span class="rd-label">Radial Heater</span>
+                                        <span class="tile-val">-- °C</span>
+                                    </div>
+                                    <div id="airSpeedTile" class="rd-field">
+                                        <span class="rd-label">Air Speed</span>
+                                        <span class="tile-val">-- m/s</span>
+                                    </div>
+                                    <div id="timeTile" class="rd-field">
+                                        <span class="rd-label">Time</span>
+                                        <span class="tile-val">-- s</span>
+                                    </div>
+                                    <div id="powerTile" class="rd-field">
+                                        <span class="rd-label">Power</span>
+                                        <span class="tile-val">-- W</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Device Data Chart -->
+                            <div class="bg-base-200 border border-base-300 rounded-lg p-3 flex flex-col" style="min-height:460px;">
+                                <!-- Clean chart header: title + display mode only -->
+                                <div class="flex items-center justify-between gap-3 mb-2">
+                                    <p class="rp-section-title mb-0">Device Data Chart</p>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="text-[0.75rem] text-base-content/50 font-semibold">Display:</span>
+                                        <select id="chartDisplayMode" class="select select-bordered select-sm h-[36px] leading-none text-[0.81rem]">
+                                            <option value="limited">Last 50 Points</option>
+                                            <option value="all">All Data Points</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Canvas -->
+                                <div style="position:relative;width:100%;flex:1 1 auto;min-height:400px;">
+                                    <canvas id="testChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Temperature vs Distance Chart -->
+                            <div class="bg-base-200 border border-base-300 rounded-lg p-3 flex flex-col" style="min-height:380px;">
+                                <p class="rp-section-title mb-2">Temperature vs Distance</p>
+                                <div style="position:relative;width:100%;flex:1 1 auto;min-height:320px;">
+                                    <canvas id="tempDistanceChart"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- ─────────────────────────────────── END CENTRE PANEL ─── -->
+
+                        <!-- ──────────────────────────────── RIGHT: control panel ─── -->
+                        <div id="right-panel"
+                             class="w-[360px] min-w-[360px] bg-base-200 border-l border-base-300 overflow-y-auto shrink-0 flex flex-col py-2">
+
+                            <!-- ── 1. Heater Temperature Control ── -->
+                            <div class="px-4 py-3 border-b border-base-300">
+                                <p class="rp-section-title">Heater Temperature Control</p>
+                                <div class="mode-btn-row three-col">
+                                    <button id="heaterOff"   class="btn btn-outline active">Off</button>
+                                    <button id="heaterLeft"  class="btn btn-outline">Linear</button>
+                                    <button id="heaterRight" class="btn btn-outline">Radial</button>
+                                </div>
+                                <div class="slider-row">
+                                    <div class="ht-slider-pos" style="position:relative;">
+                                        <div id="heaterSliderFill"></div>
+                                        <div id="heaterThumbIcon"></div>
+                                        <div class="slider-tooltip" id="heaterTooltip">20°C</div>
+                                        <input type="range" id="heaterTemp" min="20" max="70" value="20" step="1"
+                                               class="range range-primary range-sm w-full">
+                                    </div>
+                                    <div class="slider-num">
+                                        <input type="number" id="heaterTempValue" min="20" max="70" value="20" step="1"
+                                               class="input input-bordered text-center">
+                                        <span class="text-[0.81rem] text-base-content/50 font-bold">°C</span>
+                                    </div>
+                                </div>
+                                <div class="range-labels"><span>20°C</span><span>45°C</span><span>70°C</span></div>
+                            </div>
+
+                            <!-- ── 2. Fan Speed Control ── -->
+                            <div class="px-4 py-3 border-b border-base-300">
+                                <p class="rp-section-title">Fan Speed Control</p>
+                                <div class="mode-btn-row three-col">
+                                    <button id="fanOff"  class="btn btn-outline active">0%</button>
+                                    <button id="fan50"   class="btn btn-outline">50%</button>
+                                    <button id="fan100"  class="btn btn-outline">100%</button>
+                                </div>
+                                <div class="slider-row">
+                                    <div class="ht-slider-pos" style="position:relative;">
+                                        <div id="fanSliderFill"></div>
+                                        <div id="fanThumbIcon"></div>
+                                        <div class="slider-tooltip" id="fanTooltip">0%</div>
+                                        <input type="range" id="fanSpeed" min="0" max="100" value="0" step="1"
+                                               class="range range-secondary range-sm w-full">
+                                    </div>
+                                    <div class="slider-num">
+                                        <input type="number" id="fanSpeedDisplay" min="0" max="100" value="0" step="1"
+                                               class="input input-bordered text-center">
+                                        <span class="text-[0.81rem] text-base-content/50 font-bold">%</span>
+                                    </div>
+                                </div>
+                                <div class="range-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+                            </div>
+
+                            <!-- ── 3. Graph / Data Controls ── -->
+                            <div class="px-4 py-3 border-b border-base-300">
+                                <p class="rp-section-title">Graph / Data Controls</p>
+                                <button id="startCsvBtn" class="btn btn-outline graph-btn">💾 Start Saving</button>
+                                <button id="stopCsvBtn"  class="btn btn-outline btn-error graph-btn" style="display:none;">⏹️ Stop Saving</button>
+                                <button id="clearDataBtn" class="btn btn-outline btn-warning graph-btn">🗑️ Clear Graph</button>
+                                <button id="snapshotBtn"   class="btn btn-outline graph-btn">📸 Snapshot</button>
+                                <div class="divider my-1 text-[0.7rem] text-base-content/30 hidden">Print</div>
+                                <button id="printChartBtn" class="btn btn-outline graph-btn hidden">🖨️ Print Device Data Graph</button>
+                                <button id="printDistanceChartBtn" class="btn btn-outline graph-btn hidden">🖨️ Print Temp vs Distance</button>
+                            </div>
+
+                            <!-- ── 4. Actions ── -->
+                            <div class="px-4 py-3 border-b border-base-300">
+                                <p class="rp-section-title">Actions</p>
+                                <div class="flex flex-col gap-2.5">
+                                    <button id="coolerBtn"   class="btn btn-outline w-full">Cooler Off</button>
+                                    <button id="simulateBtn" class="btn btn-outline w-full">Calibrate Temperature</button>
+                                </div>
+                            </div>
+
+                            <!-- ── 5. Distance Inputs ── -->
+                            <div class="px-4 py-3">
+                                <p class="rp-section-title">Distance Inputs (mm)</p>
+                                <div class="flex flex-wrap gap-x-4 gap-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T1:</label>
+                                        <input type="number" id="distanceT1" step="0.01" value="1.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T2:</label>
+                                        <input type="number" id="distanceT2" step="0.01" value="4.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T3:</label>
+                                        <input type="number" id="distanceT3" step="0.01" value="7.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T4:</label>
+                                        <input type="number" id="distanceT4" step="0.01" value="10.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T5:</label>
+                                        <input type="number" id="distanceT5" step="0.01" value="13.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T6:</label>
+                                        <input type="number" id="distanceT6" step="0.01" value="16.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T7:</label>
+                                        <input type="number" id="distanceT7" step="0.01" value="19.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[0.81rem] font-bold text-base-content/60 w-6">T8:</label>
+                                        <input type="number" id="distanceT8" step="0.01" value="22.5"
+                                               class="input input-bordered input-sm w-[86px] text-center font-bold" placeholder="mm">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- ──────────────────────────────── END RIGHT PANEL ─── -->
+
+                    </div>
+                    <!-- ─────────────────────────────────────── END APP BODY ─── -->
+
+                    <!-- ════════════════════════════════════ ADMIN VIEW ════════ -->
+                    <div id="admin-view" class="hidden flex-1 overflow-y-auto flex flex-col min-h-0">
+
+                        <!-- Admin tab bar -->
+                        <div class="bg-base-100 border-b border-base-300 px-4 shrink-0 flex items-center gap-0">
+                            <span class="font-bold text-base-content/60 text-xs uppercase tracking-widest mr-4"
+                                  style="font-family:'Azonix',Arial,sans-serif;">Admin</span>
+                            <div role="tablist" class="tabs tabs-border">
+                                <button id="adminTabBtn_dashboard" role="tab"
+                                        class="tab tab-active text-xs font-semibold">Dashboard</button>
+                                <button id="adminTabBtn_pid" role="tab"
+                                        class="tab text-xs font-semibold">PID Controls</button>
+                                <button id="adminTabBtn_bootloader" role="tab"
+                                        class="tab text-xs font-semibold">Bootloader</button>
+                                <button id="adminTabBtn_updates" role="tab"
+                                        class="tab text-xs font-semibold">Updates</button>
+                            </div>
+                        </div>
+
+                        <!-- Tab content area -->
+                        <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+
+                            <!-- ── DASHBOARD TAB ── -->
+                            <div id="adminTab_dashboard" class="flex flex-col gap-4">
+
+                                <!-- Stats row -->
+                                <div class="stats stats-horizontal shadow bg-base-200 border border-base-300 w-full">
+                                    <div class="stat py-3 px-5">
+                                        <div class="stat-title text-xs">Total Logs</div>
+                                        <div id="adminTotalLogs" class="stat-value text-xl">0</div>
+                                    </div>
+                                    <div class="stat py-3 px-5">
+                                        <div class="stat-title text-xs">Raw Data Packets</div>
+                                        <div id="adminTotalRawData" class="stat-value text-xl">0</div>
+                                    </div>
+                                    <div class="stat py-3 px-5">
+                                        <div class="stat-title text-xs">Connection Uptime</div>
+                                        <div id="adminConnectionUptime" class="stat-value text-xl">00:00:00</div>
+                                    </div>
+                                    <div class="stat py-3 px-5">
+                                        <div class="stat-title text-xs">Data Rate (pkts/min)</div>
+                                        <div id="adminDataRate" class="stat-value text-xl">0</div>
+                                    </div>
+                                </div>
+
+                                <!-- Log + Raw Data panels -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="card bg-base-200 border border-base-300">
+                                        <div class="card-body p-3 gap-2">
+                                            <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">System Logs</h3>
+                                            <div id="adminLogContainer"
+                                                 class="bg-base-300 rounded p-2 h-56 overflow-y-auto font-mono text-xs flex flex-col gap-0.5"></div>
+                                        </div>
+                                    </div>
+                                    <div class="card bg-base-200 border border-base-300">
+                                        <div class="card-body p-3 gap-2">
+                                            <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">Raw Data Stream</h3>
+                                            <div id="rawDataContainer"
+                                                 class="bg-base-300 rounded p-2 h-56 overflow-y-auto font-mono text-xs flex flex-col gap-0.5"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Admin controls -->
+                                <div class="card bg-base-200 border border-base-300">
+                                    <div class="card-body p-3 gap-3">
+                                        <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">Admin Controls</h3>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button class="btn btn-sm btn-neutral" onclick="adminPanel.clearLogs()">Clear Logs</button>
+                                            <button class="btn btn-sm btn-neutral" onclick="adminPanel.clearRawData()">Clear Raw Data</button>
+                                            <button class="btn btn-sm btn-neutral" onclick="adminPanel.exportLogs()">Export Logs</button>
+                                            <button class="btn btn-sm btn-neutral" onclick="adminPanel.exportRawData()">Export Raw Data</button>
+                                            <button class="btn btn-sm btn-error" onclick="adminPanel.resetApp()">Reset App</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <!-- ── END DASHBOARD TAB ── -->
+
+                            <!-- ── PID CONTROLS TAB ── -->
+                            <div id="adminTab_pid" class="hidden">
+                                <div class="card bg-base-200 border border-base-300">
+                                    <div class="card-body gap-4">
+                                        <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">PID Control Settings</h3>
+
+                                        <div class="flex items-center gap-3">
+                                            <label class="text-sm font-semibold w-36 shrink-0" for="proportionalInput">Proportional (P)</label>
+                                            <input type="text" id="proportionalInput"
+                                                   class="input input-bordered input-sm w-48"
+                                                   placeholder="e.g. 1.5">
+                                            <span id="adminProportionalStatus" class="badge badge-sm badge-ghost"></span>
+                                        </div>
+
+                                        <div class="flex items-center gap-3">
+                                            <label class="text-sm font-semibold w-36 shrink-0" for="integralInput">Integral (I)</label>
+                                            <input type="text" id="integralInput"
+                                                   class="input input-bordered input-sm w-48"
+                                                   placeholder="e.g. 0.1">
+                                            <span id="adminIntegralStatus" class="badge badge-sm badge-ghost"></span>
+                                        </div>
+
+                                        <div class="flex items-center gap-3">
+                                            <label class="text-sm font-semibold w-36 shrink-0" for="differentialInput">Differential (D)</label>
+                                            <input type="text" id="differentialInput"
+                                                   class="input input-bordered input-sm w-48"
+                                                   placeholder="e.g. 0.05">
+                                            <span id="adminDifferentialStatus" class="badge badge-sm badge-ghost"></span>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ── END PID TAB ── -->
+
+                            <!-- ── BOOTLOADER TAB ── -->
+                            <div id="adminTab_bootloader" class="hidden grid grid-cols-2 gap-4">
+
+                                <!-- Left: Communication settings -->
+                                <div class="card bg-base-200 border border-base-300">
+                                    <div class="card-body p-4 gap-3">
+                                        <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">Communication Settings</h3>
+
+                                        <!-- Serial Port section (hidden — USB only) -->
+                                        <div style="display:none;" class="flex flex-col gap-2">
+                                            <p class="text-xs font-semibold text-base-content/50 uppercase">Serial Port</p>
+                                            <div class="flex items-center gap-2">
+                                                <label class="text-xs w-20 shrink-0">COM Port</label>
+                                                <select id="comPortSelect" class="select select-bordered select-xs flex-1" disabled>
+                                                    <option value="">Select Port...</option>
+                                                </select>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <label class="text-xs w-20 shrink-0">Baud Rate</label>
+                                                <select id="baudRateSelect" class="select select-bordered select-xs flex-1">
+                                                    <option value="9600">9600</option>
+                                                    <option value="19200">19200</option>
+                                                    <option value="38400">38400</option>
+                                                    <option value="57600">57600</option>
+                                                    <option value="115200" selected>115200</option>
+                                                </select>
+                                            </div>
+                                            <label class="flex items-center gap-2 cursor-pointer text-xs">
+                                                <input type="checkbox" id="comEnableCheck" class="checkbox checkbox-xs"
+                                                       onchange="adminPanel.onComEnableChanged()">
+                                                Enable
+                                            </label>
+                                        </div>
+
+                                        <!-- USB Section -->
+                                        <div class="flex flex-col gap-2">
+                                            <p class="text-xs font-semibold text-base-content/50 uppercase">USB</p>
+                                            <div class="flex items-center gap-2">
+                                                <label class="text-xs w-10 shrink-0">VID</label>
+                                                <input type="text" id="usbVidInput" class="input input-bordered input-xs flex-1"
+                                                       value="0x12BF" placeholder="0x12BF">
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <label class="text-xs w-10 shrink-0">PID</label>
+                                                <input type="text" id="usbPidInput" class="input input-bordered input-xs flex-1"
+                                                       value="0xA1" placeholder="0xA1">
+                                            </div>
+                                            <label class="flex items-center gap-2 cursor-pointer text-xs">
+                                                <input type="checkbox" id="usbEnableCheck" class="checkbox checkbox-xs" checked
+                                                       onchange="adminPanel.onUsbEnableChanged()">
+                                                Enable
+                                            </label>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <!-- Right: Actions + log -->
+                                <div class="card bg-base-200 border border-base-300">
+                                    <div class="card-body p-4 gap-3">
+                                        <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">Bootloader Actions</h3>
+
+                                        <!-- Button grid -->
+                                        <div class="grid grid-cols-3 gap-1.5">
+                                            <button id="bootVerBtn" class="btn btn-xs btn-neutral" style="display:none;"
+                                                    onclick="adminPanel.bootloaderVersion()" disabled>Bootloader Ver</button>
+                                            <button id="bootLoadHexBtn" class="btn btn-xs btn-neutral col-span-1"
+                                                    onclick="adminPanel.loadHexFile()" disabled>Load Hex File</button>
+                                            <button id="bootEraseBtn" class="btn btn-xs btn-neutral" style="display:none;"
+                                                    onclick="adminPanel.eraseFlash()" disabled>Erase</button>
+                                            <button id="bootProgramBtn" class="btn btn-xs btn-neutral" style="display:none;"
+                                                    onclick="adminPanel.programFlash()" disabled>Program</button>
+                                            <button id="bootVerifyBtn" class="btn btn-xs btn-neutral" style="display:none;"
+                                                    onclick="adminPanel.verifyFlash()" disabled>Verify</button>
+                                            <button id="bootRunAppBtn" class="btn btn-xs btn-neutral"
+                                                    onclick="adminPanel.runApplication()" disabled>Run Application</button>
+                                            <button id="bootEpvBtn" class="btn btn-xs btn-error col-span-2"
+                                                    onclick="adminPanel.eraseProgramVerify()" disabled>Erase-Program-Verify</button>
+                                            <button id="bootConnectBtn" class="btn btn-xs btn-primary"
+                                                    onclick="adminPanel.connectBootloader()">Connect</button>
+                                            <button id="bootTriggerBtn" class="btn btn-xs btn-warning col-span-3"
+                                                    onclick="adminPanel.triggerBootloader()">Trigger Bootloader</button>
+                                        </div>
+
+                                        <!-- Firmware progress (hidden until active) -->
+                                        <div id="firmwareProgressSection" class="hidden flex flex-col gap-1">
+                                            <div class="flex justify-between text-xs">
+                                                <span id="firmwareProgressLabel" class="text-base-content/70">Initializing...</span>
+                                                <span id="firmwareProgressText" class="font-bold">0%</span>
+                                            </div>
+                                            <div class="w-full bg-base-300 rounded h-3 overflow-hidden">
+                                                <div id="firmwareProgressFill"
+                                                     class="progress-fill h-full rounded transition-all duration-300 bg-primary"
+                                                     style="width:0%"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Hex file path -->
+                                        <div class="bg-base-300 rounded px-2 py-1 text-xs font-mono text-base-content/60 truncate">
+                                            <span id="hexFilePathLabel">No hex file loaded</span>
+                                        </div>
+
+                                        <!-- Bootloader log -->
+                                        <div id="bootloaderLog"
+                                             class="bg-base-300 rounded p-2 h-40 overflow-y-auto font-mono text-xs flex flex-col gap-0.5"></div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                            <!-- ── END BOOTLOADER TAB ── -->
+
+                            <!-- ── UPDATES TAB ── -->
+                            <div id="adminTab_updates" class="hidden">
+                                <div class="card bg-base-200 border border-base-300">
+                                    <div class="card-body gap-4">
+                                        <h3 class="font-bold text-sm text-base-content/70 uppercase tracking-wide">Check for Updates</h3>
+
+                                        <!-- Version info -->
+                                        <div class="flex flex-col gap-1 text-sm">
+                                            <div class="flex gap-2">
+                                                <span class="font-semibold text-base-content/60 w-32">Current Version:</span>
+                                                <span id="currentVersionDisplay" class="font-bold">Loading...</span>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <span class="font-semibold text-base-content/60 w-32">Status:</span>
+                                                <span id="updateStatusDisplay">Ready to check</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Status alert (hidden until check) -->
+                                        <div id="updateStatusAlert" class="alert hidden">
+                                            <span id="updateStatusContent"></span>
+                                        </div>
+
+                                        <!-- Progress bar (hidden until downloading) -->
+                                        <div id="updateProgressSection" class="hidden flex flex-col gap-1">
+                                            <div class="w-full bg-base-300 rounded h-3 overflow-hidden">
+                                                <div id="updateProgressFill"
+                                                     class="h-full rounded bg-primary transition-all duration-300"
+                                                     style="width:0%"></div>
+                                            </div>
+                                            <span id="updateProgressText" class="text-xs text-right text-base-content/60">0%</span>
+                                        </div>
+
+                                        <!-- Check button -->
+                                        <div>
+                                            <button id="adminCheckUpdateBtn" class="btn btn-sm btn-neutral"
+                                                    onclick="adminPanel.checkForUpdates()">Check for Updates</button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ── END UPDATES TAB ── -->
+
+                        </div>
+                        <!-- ── end tab content area ── -->
+
+                    </div>
+                    <!-- ════════════════════════════════ END ADMIN VIEW ════════ -->
+
+                </div>
+                <!-- ──────────────────────────────────── END MAIN CONTENT ─── -->
+
+            </div>
+            <!-- ════════════════════════════════════════════════ END BODY ════ -->
+
+        </div>
+
+        <!-- Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+        <!-- Admin panel logic -->
+        <script src="admin-panel.js" charset="utf-8"></script>
+        <!-- Main app logic -->
+        <script src="renderer.js?v=2" charset="utf-8"></script>
+
+        <!-- ═══════════════════ Theme selector wiring (runs after renderer.js) ═══ -->
+        <script>
+            (function () {
+                var savedTheme = localStorage.getItem('theme') || 'dark';
+                var themeSel = document.getElementById('themeSelector');
+                if (themeSel) {
+                    themeSel.value = savedTheme;
+                    themeSel.addEventListener('change', function () {
+                        if (window.applyTheme) window.applyTheme(themeSel.value);
+                    });
+                }
+            })();
+        </script>
+
+    </body>
+</html>

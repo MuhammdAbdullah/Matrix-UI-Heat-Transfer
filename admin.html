@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Transfer App - Admin Panel</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <style>
+        html {
+            font-size: 16px; /* Base size - will be scaled automatically */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Minimal theme variables to match overall app */
+        :root {
+            --bg: #000000;
+            --text: #ffffff;
+            --panel: #333333;
+            --border: #444444;
+            --accent: #2ed573;
+            --chart-bg: #1a1a1a;
+            --chart-border: #444444;
+            --chart-grid: #444444;
+            --chart-text: #000000;
+        }
+        body.theme-dark {
+            --bg: #000000;
+            --text: #ffffff;
+            --panel: #333333;
+            --border: #444444;
+            --accent: #2ed573;
+            --chart-bg: #1a1a1a;
+            --chart-border: #444444;
+            --chart-grid: #444444;
+            --chart-text: #eeeeee;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--bg, #000000);
+            min-height: 100vh;
+            color: var(--text, #ffffff);
+            overflow-x: hidden;
+            font-size: 1rem; /* Use rem units instead of fixed pixels */
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.25rem; /* Changed from 20px to rem */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .admin-header {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            text-align: center;
+        }
+
+        .admin-header h1 {
+            color: var(--text, #ffffff);
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+            font-size: 2.5em;
+        }
+
+        .admin-header p {
+            color: var(--text, #ffffff);
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem; /* Changed from 12px 24px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            cursor: pointer;
+            font-size: 1rem; /* Changed from 16px to rem */
+            font-weight: bold;
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            transition: all 0.3s ease;
+            box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2); /* Changed from 0 4px 15px to rem */
+        }
+
+        .back-btn:hover {
+            transform: translateY(-0.125rem); /* Changed from -2px to rem */
+            box-shadow: 0 0.375rem 1.25rem rgba(231, 76, 60, 0.4); /* Changed from 0 4px 15px to rem */
+        }
+
+        .admin-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem; /* Changed from 20px to rem */
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+        }
+
+        .admin-panel {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .admin-panel h2 {
+            color: var(--text, #ffffff);
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            font-size: 1.5em;
+            border-bottom: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            padding-bottom: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .log-container {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            height: 25rem; /* Changed from 400px to rem */
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem; /* Changed from 12px to rem */
+            line-height: 1.4;
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-timestamp {
+            color: #95a5a6;
+        }
+
+        .log-info {
+            color: #3498db;
+        }
+
+        .log-success {
+            color: #2ecc71;
+        }
+
+        .log-warning {
+            color: #f39c12;
+        }
+
+        .log-error {
+            color: #e74c3c;
+        }
+
+        .raw-data-container {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            height: 25rem; /* Changed from 400px to rem */
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.6875rem; /* Changed from 11px to rem */
+            line-height: 1.3;
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .raw-data-entry {
+            margin-bottom: 3px;
+            padding: 1px 0;
+            color: #ecf0f1;
+        }
+
+        .raw-data-hex {
+            color: #e67e22;
+        }
+
+        .raw-data-ascii {
+            color: #9b59b6;
+        }
+
+        .admin-controls {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            text-align: center;
+        }
+
+        .admin-controls h2 {
+            color: var(--text, #ffffff);
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            font-size: 1.5em;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 0.9375rem; /* Changed from 15px to rem */
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem; /* Changed from 12px 20px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            cursor: pointer;
+            font-size: 0.875rem; /* Changed from 14px to rem */
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2); /* Changed from 0 4px 15px to rem */
+        }
+
+        .control-btn:hover {
+            transform: translateY(-0.125rem); /* Changed from -2px to rem */
+            box-shadow: 0 0.375rem 1.25rem rgba(52, 152, 219, 0.4); /* Changed from 0 4px 15px to rem */
+        }
+
+        .control-btn.danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .control-btn.danger:hover {
+            box-shadow: 0 0.375rem 1.25rem rgba(231, 76, 60, 0.4); /* Changed from 0 4px 15px to rem */
+        }
+
+        .stats-panel {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            margin-top: 1.25rem; /* Changed from 20px to rem */
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr)); /* Changed from 200px to rem */
+            gap: 0.9375rem; /* Changed from 15px to rem */
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* PID Controls */
+        .pid-controls {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+        }
+
+        .pid-controls h2 {
+            color: var(--text, #ffffff);
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            font-size: 1.5em;
+            border-bottom: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            padding-bottom: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .pid-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.9375rem; /* Changed from 15px to rem */
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            flex-wrap: wrap;
+        }
+
+        .pid-label {
+            font-weight: bold;
+            color: var(--text, #ffffff);
+            min-width: 7.5rem; /* Changed from 120px to rem */
+            font-size: 1.1em;
+        }
+
+        .pid-input {
+            padding: 0.625rem 0.9375rem; /* Changed from 10px 15px to rem */
+            border: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            font-size: 1rem; /* Changed from 16px to rem */
+            width: 9.375rem; /* Changed from 150px to rem */
+            background: var(--bg, #000);
+            color: var(--text, #ffffff);
+            transition: all 0.3s ease;
+        }
+
+        .pid-input:focus {
+            outline: none;
+            border-color: var(--accent, #2ed573);
+            box-shadow: 0 0 0.625rem rgba(46, 213, 115, 0.3); /* Changed from 0 0 10px to rem */
+        }
+
+        .pid-status {
+            font-size: 0.9em;
+            color: var(--text, #ffffff);
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        .pid-status.success {
+            color: #2ecc71;
+            opacity: 1;
+        }
+
+        .pid-status.error {
+            color: #e74c3c;
+            opacity: 1;
+        }
+
+        /* Tab Navigation Styles */
+        .tab-menu {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 0;
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            overflow: hidden;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0;
+            border-bottom: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            background: rgba(46, 213, 115, 0.1);
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 0.9375rem 1.5625rem; /* Changed from 15px 25px to rem */
+            cursor: pointer;
+            font-size: 1rem; /* Changed from 16px to rem */
+            font-weight: bold;
+            color: var(--text, #ffffff);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            border-bottom: 0.1875rem solid transparent; /* Changed from 3px to rem */
+            flex: 1;
+            text-align: center;
+        }
+
+        .tab-button:hover {
+            background: rgba(46, 213, 115, 0.1);
+            opacity: 1;
+        }
+
+        .tab-button.active {
+            color: var(--accent, #2ed573);
+            border-bottom-color: var(--accent, #2ed573);
+            background: var(--panel, #333);
+            opacity: 1;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1.25rem; /* Changed from 20px to rem */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Bootloader Tab Styles */
+        .bootloader-panel {
+            background: var(--panel, #333);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3); /* Changed from 0 8px 32px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .bootloader-panel h2 {
+            color: var(--text, #ffffff);
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            font-size: 1.5em;
+            border-bottom: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            padding-bottom: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .bootloader-info {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            border-left: 0.25rem solid var(--accent, #2ed573); /* Changed from 4px to rem */
+        }
+
+        .bootloader-info p {
+            color: var(--text, #ffffff);
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+            line-height: 1.6;
+        }
+
+        .bootloader-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .bootloader-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 0.9375rem 1.5625rem; /* Changed from 15px 25px to rem */
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            cursor: pointer;
+            font-size: 1rem; /* Changed from 16px to rem */
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2); /* Changed from 0 4px 15px to rem */
+        }
+
+        .bootloader-btn:hover {
+            transform: translateY(-0.125rem); /* Changed from -2px to rem */
+            box-shadow: 0 0.375rem 1.25rem rgba(52, 152, 219, 0.4); /* Changed from 0 4px 15px to rem */
+        }
+
+        .bootloader-btn.danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .bootloader-btn.danger:hover {
+            box-shadow: 0 0.375rem 1.25rem rgba(231, 76, 60, 0.4); /* Changed from 0 4px 15px to rem */
+        }
+
+        /* File Upload Section Styles */
+        .file-upload-section {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .file-path-display {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            padding: 0.75rem 0.9375rem; /* Changed from 12px 15px to rem */
+            border-left: 0.25rem solid var(--accent, #2ed573); /* Changed from 4px to rem */
+            min-height: 1.25rem; /* Changed from 20px to rem */
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .file-path-label {
+            color: var(--text, #ffffff);
+            font-size: 0.875rem; /* Changed from 14px to rem */
+            font-weight: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-path-label.has-file {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .file-path-label.has-file::before {
+            content: "📄 ";
+        }
+
+        /* Upload Progress Styles */
+        .upload-progress {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 1.5625rem; /* Changed from 25px to rem */
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.75rem; /* Changed from 12px to rem */
+            overflow: hidden;
+            border: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem; /* Changed from 12px to rem */
+            font-weight: bold;
+        }
+
+        .progress-text {
+            color: var(--text, #ffffff);
+            font-size: 0.875rem; /* Changed from 14px to rem */
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .bootloader-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bootloader-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Communication Settings Styles */
+        .comm-section {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.5rem; /* Changed from 8px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            margin-bottom: 0.9375rem; /* Changed from 15px to rem */
+            border-left: 0.25rem solid var(--accent, #2ed573); /* Changed from 4px to rem */
+        }
+
+        .comm-section h3 {
+            color: var(--text, #ffffff);
+            margin-bottom: 0.75rem; /* Changed from 12px to rem */
+            font-size: 1.1em;
+        }
+
+        .comm-control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem; /* Changed from 10px to rem */
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+        }
+
+        .comm-control-group label {
+            min-width: 5rem; /* Changed from 80px to rem */
+            color: var(--text, #ffffff);
+            font-weight: 500;
+        }
+
+        .comm-select, .comm-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem; /* Changed from 8px 12px to rem */
+            border: 0.125rem solid var(--border, #444); /* Changed from 2px to rem */
+            border-radius: 0.375rem; /* Changed from 6px to rem */
+            font-size: 0.875rem; /* Changed from 14px to rem */
+            background: var(--bg, #000);
+            color: var(--text, #ffffff);
+            transition: all 0.3s ease;
+        }
+
+        .comm-select:focus, .comm-input:focus {
+            outline: none;
+            border-color: var(--accent, #2ed573);
+            box-shadow: 0 0 0.5rem rgba(46, 213, 115, 0.3); /* Changed from 0 0 8px to rem */
+        }
+
+        .comm-select:disabled, .comm-input:disabled {
+            background: var(--chart-bg, #1a1a1a);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Bootloader Buttons Grid */
+        .bootloader-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .bootloader-buttons-grid .bootloader-btn {
+            padding: 12px 15px;
+            font-size: 14px;
+            min-width: 0;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Bootloader Log Container */
+        .bootloader-log-container {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            height: 18.75rem; /* Changed from 300px to rem */
+            margin-top: 1.25rem; /* Changed from 20px to rem */
+            overflow-y: auto;
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .bootloader-log-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem; /* Changed from 12px to rem */
+            line-height: 1.6;
+            color: var(--text, #ffffff);
+        }
+
+        .bootloader-log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .bootloader-log-entry.success {
+            color: #2ecc71;
+        }
+
+        .bootloader-log-entry.error {
+            color: #e74c3c;
+        }
+
+        .bootloader-log-entry.info {
+            color: #3498db;
+        }
+
+        /* DFU Status Indicator Styles */
+
+        /* Firmware Progress Bar Styles */
+        .firmware-progress-section {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.75rem; /* Changed from 12px to rem */
+            padding: 0.9375rem 1.25rem; /* Changed from 15px 20px to rem */
+            margin: 0.9375rem 0; /* Changed from 15px to rem */
+            box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2); /* Changed from 0 4px 15px to rem */
+            border: 0.0625rem solid var(--border, #444); /* Changed from 1px to rem */
+        }
+
+        .firmware-progress-label {
+            color: var(--text, #ffffff);
+            font-size: 0.875rem; /* Changed from 14px to rem */
+            font-weight: bold;
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+            text-align: center;
+        }
+
+        .firmware-progress-bar {
+            width: 100%;
+            height: 1.875rem; /* Changed from 30px to rem */
+            background: var(--bg, #000);
+            border-radius: 0.9375rem; /* Changed from 15px to rem */
+            overflow: hidden;
+            border: 0.125rem solid var(--accent, #2ed573); /* Changed from 2px to rem */
+            position: relative;
+        }
+
+        .firmware-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71, #27ae60);
+            background-size: 200% 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 13px;
+            animation: progressShine 2s linear infinite;
+        }
+
+        .firmware-progress-fill.erasing {
+            background: linear-gradient(90deg, #e67e22, #f39c12, #e67e22);
+            background-size: 200% 100%;
+        }
+
+        .firmware-progress-fill.verifying {
+            background: linear-gradient(90deg, #3498db, #2980b9, #3498db);
+            background-size: 200% 100%;
+        }
+
+        @keyframes progressShine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .firmware-progress-text {
+            color: #2ecc71;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .firmware-progress-text.erasing {
+            color: #f39c12;
+        }
+
+        .firmware-progress-text.verifying {
+            color: #3498db;
+        }
+
+        /* Update Check Styles */
+        .update-info-section {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            padding: 1.25rem; /* Changed from 20px to rem */
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            border-left: 0.25rem solid var(--accent, #2ed573); /* Changed from 4px to rem */
+        }
+
+        .update-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.625rem; /* Changed from 10px to rem */
+            font-size: 1rem; /* Changed from 16px to rem */
+        }
+
+        .update-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .update-info-item strong {
+            color: var(--text, #ffffff);
+        }
+
+        .update-status-message {
+            background: var(--chart-bg, #1a1a1a);
+            border-radius: 0.625rem; /* Changed from 10px to rem */
+            padding: 0.9375rem; /* Changed from 15px to rem */
+            margin-bottom: 1.25rem; /* Changed from 20px to rem */
+            border-left: 0.25rem solid var(--accent, #2ed573); /* Changed from 4px to rem */
+        }
+
+        .update-status-message.success {
+            background: rgba(46, 213, 115, 0.2);
+            border-left-color: #2ecc71;
+        }
+
+        .update-status-message.error {
+            background: rgba(231, 76, 60, 0.2);
+            border-left-color: #e74c3c;
+        }
+
+        .update-status-message.info {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: #3498db;
+        }
+
+        .update-status-content {
+            color: var(--text, #ffffff);
+            font-size: 0.875rem; /* Changed from 14px to rem */
+            line-height: 1.6;
+        }
+
+        .update-progress-section {
+            margin-bottom: 20px;
+        }
+
+        .update-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-panels {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .tab-buttons {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: 1 1 50%;
+                min-width: 7.5rem; /* Changed from 120px to rem */
+            }
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>🔧 Admin Panel</h1>
+            <p>System logs, raw data, and debugging information</p>
+        </div>
+
+        <!-- Tab Menu -->
+        <div class="tab-menu">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+                <button class="tab-button" onclick="switchTab('pid', this)">🎛️ PID Controls</button>
+                <button class="tab-button" onclick="switchTab('bootloader', this)">🔧 Bootloader</button>
+                <button class="tab-button" onclick="switchTab('updates', this)">🔄 Check for Updates</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="admin-panels">
+            <div class="admin-panel">
+                <h2>📋 System Logs</h2>
+                <div class="log-container" id="adminLogContainer">
+                    <div class="log-entry">
+                        <span class="log-timestamp">[Loading...]</span>
+                        <span class="log-info"> Admin panel initialized</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel">
+                <h2>📡 Raw Data Stream</h2>
+                <div class="raw-data-container" id="rawDataContainer">
+                    <div class="raw-data-entry">
+                        <span class="log-timestamp">[Waiting for data...]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                <div class="admin-controls">
+                    <h2>🛠️ Admin Controls</h2>
+                    <div class="control-buttons">
+                        <button class="control-btn" onclick="clearLogs()">🗑️ Clear Logs</button>
+                        <button class="control-btn" onclick="clearRawData()">📡 Clear Raw Data</button>
+                        <button class="control-btn" onclick="exportLogs()">💾 Export Logs</button>
+                        <button class="control-btn" onclick="exportRawData()">📊 Export Raw Data</button>
+                        <button class="control-btn danger" onclick="resetApp()">🔄 Reset App</button>
+                    </div>
+                </div>
+
+                <div class="stats-panel">
+                    <h2>📊 System Statistics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalLogs">0</div>
+                            <div class="stat-label">Total Log Entries</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalRawData">0</div>
+                            <div class="stat-label">Raw Data Packets</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="connectionUptime">00:00:00</div>
+                            <div class="stat-label">Connection Uptime</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="dataRate">0</div>
+                            <div class="stat-label">Data Rate (packets/min)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PID Controls Tab -->
+            <div id="pidTab" class="tab-content">
+                <div class="pid-controls">
+                    <h2>🎛️ PID Control Settings</h2>
+                    <div class="pid-input-group">
+                        <label class="pid-label" for="proportionalInput">Proportional (P):</label>
+                        <input type="text" id="proportionalInput" class="pid-input" placeholder="Enter float value (e.g., 1.5)">
+                        <span class="pid-status" id="proportionalStatus"></span>
+                    </div>
+                    <div class="pid-input-group">
+                        <label class="pid-label" for="integralInput">Integral (I):</label>
+                        <input type="text" id="integralInput" class="pid-input" placeholder="Enter float value (e.g., 0.1)">
+                        <span class="pid-status" id="integralStatus"></span>
+                    </div>
+                    <div class="pid-input-group">
+                        <label class="pid-label" for="differentialInput">Differential (D):</label>
+                        <input type="text" id="differentialInput" class="pid-input" placeholder="Enter float value (e.g., 0.05)">
+                        <span class="pid-status" id="differentialStatus"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bootloader Tab -->
+            <div id="bootloaderTab" class="tab-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Left Panel: Communication Settings -->
+                    <div class="bootloader-panel">
+                        <h2>📡 Communication Settings</h2>
+                        
+                        <!-- Serial Port Section (Hidden - USB only) -->
+                        <div class="comm-section" style="display: none;">
+                            <h3>Serial Port</h3>
+                            <div class="comm-control-group">
+                                <label>Com Port:</label>
+                                <select id="comPortSelect" class="comm-select" disabled>
+                                    <option value="">Select Port...</option>
+                                </select>
+                            </div>
+                            <div class="comm-control-group">
+                                <label>Baud Rate:</label>
+                                <select id="baudRateSelect" class="comm-select">
+                                    <option value="9600">9600</option>
+                                    <option value="19200">19200</option>
+                                    <option value="38400">38400</option>
+                                    <option value="57600">57600</option>
+                                    <option value="115200" selected>115200</option>
+                                </select>
+                            </div>
+                            <div class="comm-control-group">
+                                <label>
+                                    <input type="checkbox" id="comEnableCheck" onchange="onComEnableChanged()">
+                                    Enable
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- USB Section -->
+                        <div class="comm-section">
+                            <h3>USB</h3>
+                            <div class="comm-control-group">
+                                <label>VID:</label>
+                                <input type="text" id="usbVidInput" class="comm-input" value="0x12BF" placeholder="0x12BF">
+                            </div>
+                            <div class="comm-control-group">
+                                <label>PID:</label>
+                                <input type="text" id="usbPidInput" class="comm-input" value="0xA1" placeholder="0xA1">
+                            </div>
+                            <div class="comm-control-group">
+                                <label>
+                                    <input type="checkbox" id="usbEnableCheck" checked onchange="onUsbEnableChanged()">
+                                    Enable
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Panel: Action Buttons and Log -->
+                    <div class="bootloader-panel">
+                        <h2>🔧 Bootloader Actions</h2>
+                        
+                        <!-- Action Buttons -->
+                        <div class="bootloader-buttons-grid">
+                            <button class="bootloader-btn" id="bootloaderVerBtn" onclick="bootloaderVersion()" disabled style="display: none;">Bootloader Ver</button>
+                            <button class="bootloader-btn" id="loadHexBtn" onclick="loadHexFile()" disabled>Load Hex File</button>
+                            <button class="bootloader-btn" id="eraseBtn" onclick="eraseFlash()" disabled style="display: none;">Erase</button>
+                            
+                            <button class="bootloader-btn" id="programBtn" onclick="programFlash()" disabled style="display: none;">Program</button>
+                            <button class="bootloader-btn" id="verifyBtn" onclick="verifyFlash()" disabled style="display: none;">Verify</button>
+                            <button class="bootloader-btn" id="runAppBtn" onclick="runApplication()" disabled>Run Application</button>
+                            
+                            <button class="bootloader-btn danger" id="eraseProgVerifyBtn" onclick="eraseProgramVerify()" disabled>Erase-Program-Verify</button>
+                            <button class="bootloader-btn" id="connectBtn" onclick="connectBootloader()">Connect</button>
+                            <button class="bootloader-btn" id="triggerBootloaderBtn" onclick="triggerBootloader()">Trigger Bootloader</button>
+                        </div>
+                        
+                        <!-- Firmware Progress Bar -->
+                        <div class="firmware-progress-section" id="firmwareProgressSection" style="display: none;">
+                            <div class="firmware-progress-label" id="firmwareProgressLabel">Initializing...</div>
+                            <div class="firmware-progress-bar">
+                                <div class="firmware-progress-fill" id="firmwareProgressFill"></div>
+                            </div>
+                            <div class="firmware-progress-text" id="firmwareProgressText">0%</div>
+                        </div>
+                        
+                        <!-- Hex File Display -->
+                        <div class="file-upload-section">
+                            <div class="file-path-display">
+                                <span class="file-path-label" id="hexFilePathLabel">No hex file loaded</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Log Output Area -->
+                        <div class="bootloader-log-container">
+                            <div id="bootloaderLog" class="bootloader-log-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check for Updates Tab -->
+            <div id="updatesTab" class="tab-content">
+                <div class="bootloader-panel">
+                    <h2>🔄 Check for Updates</h2>
+                    
+                    <!-- Current Version Display -->
+                    <div class="update-info-section">
+                        <div class="update-info-item">
+                            <strong>Current Version:</strong>
+                            <span id="currentVersionDisplay">Loading...</span>
+                        </div>
+                        <div class="update-info-item">
+                            <strong>Status:</strong>
+                            <span id="updateStatusDisplay">Ready to check</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Update Status Message -->
+                    <div class="update-status-message" id="updateStatusMessage" style="display: none;">
+                        <div class="update-status-content" id="updateStatusContent"></div>
+                    </div>
+                    
+                    <!-- Update Progress -->
+                    <div class="update-progress-section" id="updateProgressSection" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="updateProgressFill"></div>
+                        </div>
+                        <span class="progress-text" id="updateProgressText">0%</span>
+                    </div>
+                    
+                    <!-- Check for Updates Button -->
+                    <div class="update-controls">
+                        <button class="bootloader-btn" id="checkUpdateBtn" onclick="checkForUpdates()">🔄 Check for Updates</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+        let rawDataCount = 0;
+        let connectionStartTime = null;
+        let lastDataTime = null;
+        let dataRateInterval = null;
+
+        // Initialize admin panel
+        function initAdminPanel() {
+            console.log('Admin panel initialized');
+            updateStats();
+            startDataRateCalculation();
+        }
+
+        // Add log entry to admin panel
+        function addAdminLog(message, type = 'info') {
+            const logContainer = document.getElementById('adminLogContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-${type}"> ${message}</span>
+            `;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            logCount++;
+            updateStats();
+            
+            // Keep only last 1000 entries
+            while (logContainer.children.length > 1000) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        // Add raw data entry
+        function addRawDataEntry(data, type = 'hex') {
+            const rawDataContainer = document.getElementById('rawDataContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const dataEntry = document.createElement('div');
+            dataEntry.className = 'raw-data-entry';
+            
+            let displayData = '';
+            if (type === 'hex') {
+                displayData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            } else {
+                displayData = data.toString();
+            }
+            
+            dataEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="raw-data-${type}"> ${displayData}</span>
+            `;
+            
+            rawDataContainer.appendChild(dataEntry);
+            rawDataContainer.scrollTop = rawDataContainer.scrollHeight;
+            
+            rawDataCount++;
+            lastDataTime = Date.now();
+            updateStats();
+            
+            // Keep only last 2000 entries
+            while (rawDataContainer.children.length > 2000) {
+                rawDataContainer.removeChild(rawDataContainer.firstChild);
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalLogs').textContent = logCount;
+            document.getElementById('totalRawData').textContent = rawDataCount;
+            
+            if (connectionStartTime) {
+                const uptime = Date.now() - connectionStartTime;
+                const hours = Math.floor(uptime / 3600000);
+                const minutes = Math.floor((uptime % 3600000) / 60000);
+                const seconds = Math.floor((uptime % 60000) / 1000);
+                document.getElementById('connectionUptime').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Start data rate calculation
+        function startDataRateCalculation() {
+            if (dataRateInterval) clearInterval(dataRateInterval);
+            
+            dataRateInterval = setInterval(() => {
+                if (lastDataTime) {
+                    const timeDiff = (Date.now() - lastDataTime) / 1000 / 60; // minutes
+                    const rate = timeDiff > 0 ? Math.round(rawDataCount / timeDiff) : 0;
+                    document.getElementById('dataRate').textContent = rate;
+                }
+            }, 5000);
+        }
+
+        // Admin control functions
+        function clearLogs() {
+            document.getElementById('adminLogContainer').innerHTML = 
+                '<div class="log-entry"><span class="log-timestamp">[' + new Date().toLocaleTimeString() + ']</span><span class="log-info"> Logs cleared</span></div>';
+            logCount = 0;
+            updateStats();
+        }
+
+        function clearRawData() {
+            document.getElementById('rawDataContainer').innerHTML = 
+                '<div class="raw-data-entry"><span class="log-timestamp">[' + new Date().toLocaleTimeString() + ']</span><span class="log-info"> Raw data cleared</span></div>';
+            rawDataCount = 0;
+            updateStats();
+        }
+
+        function exportLogs() {
+            const logs = document.getElementById('adminLogContainer').innerText;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `heat-transfer-logs-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportRawData() {
+            const rawData = document.getElementById('rawDataContainer').innerText;
+            const blob = new Blob([rawData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `heat-transfer-raw-data-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetApp() {
+            if (confirm('Are you sure you want to reset the application? This will clear all data and restart the connection.')) {
+                // Send reset command to main process
+                if (window.electronAPI && window.electronAPI.resetApp) {
+                    window.electronAPI.resetApp();
+                }
+                clearLogs();
+                clearRawData();
+                addAdminLog('Application reset requested', 'warning');
+            }
+        }
+
+        // Set connection start time
+        function setConnectionStartTime() {
+            connectionStartTime = Date.now();
+            addAdminLog('Connection established', 'success');
+        }
+
+        // PID Control Functions
+        let lastProportionalValue = '';
+        let lastIntegralValue = '';
+        let lastDifferentialValue = '';
+
+        // Function to send PID value
+        async function sendPIDValue(type, value) {
+            // Check if electronAPI is available
+            if (!window.electronAPI || !window.electronAPI.sendPIDValue) {
+                addAdminLog('PID control not available - electronAPI not ready', 'error');
+                return false;
+            }
+
+            try {
+                const result = await window.electronAPI.sendPIDValue(type, value);
+                if (result.success) {
+                    addAdminLog(`PID ${type} value sent: ${value}`, 'success');
+                    return true;
+                } else {
+                    addAdminLog(`Failed to send PID ${type}: ${result.error}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addAdminLog(`Error sending PID ${type}: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Function to update status message
+        function updatePIDStatus(type, success, message) {
+            const statusElement = document.getElementById(type + 'Status');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.className = 'pid-status ' + (success ? 'success' : 'error');
+                // Clear status after 3 seconds
+                setTimeout(() => {
+                    statusElement.textContent = '';
+                    statusElement.className = 'pid-status';
+                }, 3000);
+            }
+        }
+
+        // Tab switching function
+        function switchTab(tabName, clickedButton) {
+            // Hide all tab contents
+            const allTabs = document.querySelectorAll('.tab-content');
+            for (let i = 0; i < allTabs.length; i++) {
+                allTabs[i].classList.remove('active');
+            }
+
+            // Remove active class from all tab buttons
+            const allButtons = document.querySelectorAll('.tab-button');
+            for (let i = 0; i < allButtons.length; i++) {
+                allButtons[i].classList.remove('active');
+            }
+
+            // Show selected tab content
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+
+            // Log tab switch
+            addAdminLog('Switched to ' + tabName + ' tab', 'info');
+        }
+
+        // Bootloader functions
+        let bootloaderConnected = false;
+        let hexFileLoaded = false;
+        let hexFilePath = '';
+
+        // Firmware progress bar functions
+        function showFirmwareProgress(label, percent, mode) {
+            const section = document.getElementById('firmwareProgressSection');
+            const labelEl = document.getElementById('firmwareProgressLabel');
+            const fillEl = document.getElementById('firmwareProgressFill');
+            const textEl = document.getElementById('firmwareProgressText');
+            
+            if (!section || !labelEl || !fillEl || !textEl) return;
+            
+            section.style.display = 'block';
+            labelEl.textContent = label;
+            fillEl.style.width = percent + '%';
+            textEl.textContent = percent + '%';
+            
+            // Remove all mode classes
+            fillEl.classList.remove('erasing', 'verifying');
+            textEl.classList.remove('erasing', 'verifying');
+            
+            // Add mode-specific class
+            if (mode === 'erase') {
+                fillEl.classList.add('erasing');
+                textEl.classList.add('erasing');
+            } else if (mode === 'verify') {
+                fillEl.classList.add('verifying');
+                textEl.classList.add('verifying');
+            }
+        }
+
+        function hideFirmwareProgress() {
+            const section = document.getElementById('firmwareProgressSection');
+            if (section) {
+                section.style.display = 'none';
+            }
+        }
+
+        function updateFirmwareProgress(label, percent) {
+            const labelEl = document.getElementById('firmwareProgressLabel');
+            const fillEl = document.getElementById('firmwareProgressFill');
+            const textEl = document.getElementById('firmwareProgressText');
+            
+            if (labelEl) labelEl.textContent = label;
+            if (fillEl) fillEl.style.width = percent + '%';
+            if (textEl) textEl.textContent = Math.round(percent) + '%';
+        }
+
+        // Helper function to add log to bootloader log area
+        function addBootloaderLog(message, type = 'info') {
+            const logContainer = document.getElementById('bootloaderLog');
+            if (!logContainer) return;
+            
+            const entry = document.createElement('div');
+            entry.className = 'bootloader-log-entry ' + type;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Helper function to manage bootloader button states
+        // States: 'disconnected', 'connected', 'hex_loaded', 'busy', 'ready_to_run'
+        function setBootloaderButtonState(state) {
+            const connectBtn = document.getElementById('connectBtn');
+            const triggerBtn = document.getElementById('triggerBootloaderBtn');
+            const loadHexBtn = document.getElementById('loadHexBtn');
+            const eraseProgVerifyBtn = document.getElementById('eraseProgVerifyBtn');
+            const runAppBtn = document.getElementById('runAppBtn');
+            // Hidden buttons (still need to manage them)
+            const bootloaderVerBtn = document.getElementById('bootloaderVerBtn');
+            const eraseBtn = document.getElementById('eraseBtn');
+            const programBtn = document.getElementById('programBtn');
+            const verifyBtn = document.getElementById('verifyBtn');
+            
+            switch(state) {
+                case 'disconnected':
+                    // Initial state - only Connect and Trigger Bootloader enabled
+                    if (connectBtn) connectBtn.disabled = false;
+                    if (triggerBtn) triggerBtn.disabled = false;
+                    if (loadHexBtn) loadHexBtn.disabled = true;
+                    if (eraseProgVerifyBtn) eraseProgVerifyBtn.disabled = true;
+                    if (runAppBtn) runAppBtn.disabled = true;
+                    // Hidden buttons
+                    if (bootloaderVerBtn) bootloaderVerBtn.disabled = true;
+                    if (eraseBtn) eraseBtn.disabled = true;
+                    if (programBtn) programBtn.disabled = true;
+                    if (verifyBtn) verifyBtn.disabled = true;
+                    break;
+                    
+                case 'connected':
+                    // After connect - only Load Hex File enabled, Trigger Bootloader disabled
+                    if (connectBtn) connectBtn.disabled = false;
+                    if (triggerBtn) triggerBtn.disabled = true;
+                    if (loadHexBtn) loadHexBtn.disabled = false;
+                    if (eraseProgVerifyBtn) eraseProgVerifyBtn.disabled = true;
+                    if (runAppBtn) runAppBtn.disabled = true;
+                    // Hidden buttons
+                    if (bootloaderVerBtn) bootloaderVerBtn.disabled = true;
+                    if (eraseBtn) eraseBtn.disabled = true;
+                    if (programBtn) programBtn.disabled = true;
+                    if (verifyBtn) verifyBtn.disabled = true;
+                    break;
+                    
+                case 'hex_loaded':
+                    // After hex file loaded - Load Hex and Erase-Program-Verify enabled
+                    if (connectBtn) connectBtn.disabled = false;
+                    if (triggerBtn) triggerBtn.disabled = true;
+                    if (loadHexBtn) loadHexBtn.disabled = false;
+                    if (eraseProgVerifyBtn) eraseProgVerifyBtn.disabled = false;
+                    if (runAppBtn) runAppBtn.disabled = true;
+                    // Hidden buttons
+                    if (bootloaderVerBtn) bootloaderVerBtn.disabled = true;
+                    if (eraseBtn) eraseBtn.disabled = true;
+                    if (programBtn) programBtn.disabled = true;
+                    if (verifyBtn) verifyBtn.disabled = true;
+                    break;
+                    
+                case 'busy':
+                    // During operation - all buttons disabled
+                    if (connectBtn) connectBtn.disabled = true;
+                    if (triggerBtn) triggerBtn.disabled = true;
+                    if (loadHexBtn) loadHexBtn.disabled = true;
+                    if (eraseProgVerifyBtn) eraseProgVerifyBtn.disabled = true;
+                    if (runAppBtn) runAppBtn.disabled = true;
+                    // Hidden buttons
+                    if (bootloaderVerBtn) bootloaderVerBtn.disabled = true;
+                    if (eraseBtn) eraseBtn.disabled = true;
+                    if (programBtn) programBtn.disabled = true;
+                    if (verifyBtn) verifyBtn.disabled = true;
+                    break;
+                    
+                case 'ready_to_run':
+                    // After Erase-Program-Verify completes - ONLY Run Application enabled
+                    if (connectBtn) connectBtn.disabled = true;
+                    if (triggerBtn) triggerBtn.disabled = true;
+                    if (loadHexBtn) loadHexBtn.disabled = true;
+                    if (eraseProgVerifyBtn) eraseProgVerifyBtn.disabled = true;
+                    if (runAppBtn) runAppBtn.disabled = false;
+                    // Hidden buttons
+                    if (bootloaderVerBtn) bootloaderVerBtn.disabled = true;
+                    if (eraseBtn) eraseBtn.disabled = true;
+                    if (programBtn) programBtn.disabled = true;
+                    if (verifyBtn) verifyBtn.disabled = true;
+                    break;
+            }
+        }
+        
+        // Legacy function for compatibility
+        function enableBootloaderButtons(enabled) {
+            if (enabled) {
+                if (hexFileLoaded) {
+                    setBootloaderButtonState('hex_loaded');
+                } else {
+                    setBootloaderButtonState('connected');
+                }
+            } else {
+                setBootloaderButtonState('disconnected');
+            }
+        }
+
+        // Communication settings change handlers
+        function onComEnableChanged() {
+            const comEnabled = document.getElementById('comEnableCheck').checked;
+            const usbEnabled = document.getElementById('usbEnableCheck').checked;
+            
+            document.getElementById('comPortSelect').disabled = !comEnabled;
+            document.getElementById('baudRateSelect').disabled = !comEnabled;
+            
+            if (comEnabled) {
+                document.getElementById('usbEnableCheck').checked = false;
+                document.getElementById('usbVidInput').disabled = true;
+                document.getElementById('usbPidInput').disabled = true;
+            }
+        }
+
+        function onUsbEnableChanged() {
+            const usbEnabled = document.getElementById('usbEnableCheck').checked;
+            const comEnabled = document.getElementById('comEnableCheck').checked;
+            
+            document.getElementById('usbVidInput').disabled = !usbEnabled;
+            document.getElementById('usbPidInput').disabled = !usbEnabled;
+            
+            if (usbEnabled) {
+                document.getElementById('comEnableCheck').checked = false;
+                document.getElementById('comPortSelect').disabled = true;
+                document.getElementById('baudRateSelect').disabled = true;
+            }
+        }
+
+        // Trigger Bootloader button - sends :K1;\n command to enter bootloader mode
+        async function triggerBootloader() {
+            const triggerBtn = document.getElementById('triggerBootloaderBtn');
+            if (!triggerBtn) return;
+            
+            triggerBtn.disabled = true;
+            addBootloaderLog('Sending bootloader command to enter bootloader mode...', 'info');
+            
+            try {
+                if (window.electronAPI && window.electronAPI.sendBootloader) {
+                    const result = await window.electronAPI.sendBootloader(1);
+                    if (result.success) {
+                        addBootloaderLog('Bootloader command sent successfully', 'success');
+                        addBootloaderLog('Device should now be in bootloader mode', 'info');
+                    } else {
+                        addBootloaderLog('Failed to send bootloader command: ' + (result.error || 'Unknown error'), 'error');
+                    }
+                } else {
+                    addBootloaderLog('Bootloader control not available', 'error');
+                }
+            } catch (error) {
+                addBootloaderLog('Error sending bootloader command: ' + error.message, 'error');
+            } finally {
+                triggerBtn.disabled = false;
+            }
+        }
+
+        // Connect/Disconnect button handler
+        async function connectBootloader() {
+            const connectBtn = document.getElementById('connectBtn');
+            
+            if (bootloaderConnected) {
+                // Disconnect
+                addBootloaderLog('Disconnecting from bootloader device...', 'info');
+                if (window.electronAPI && window.electronAPI.disconnectFromPort) {
+                    await window.electronAPI.disconnectFromPort();
+                }
+                bootloaderConnected = false;
+                hexFileLoaded = false; // Reset hex file status on disconnect
+                connectBtn.textContent = 'Connect';
+                setBootloaderButtonState('disconnected');
+                addBootloaderLog('Device disconnected', 'info');
+            } else {
+                // Connect
+                const comEnabled = document.getElementById('comEnableCheck').checked;
+                const usbEnabled = document.getElementById('usbEnableCheck').checked;
+                
+                if (!comEnabled && !usbEnabled) {
+                    addBootloaderLog('Please enable COM or USB communication', 'error');
+                    return;
+                }
+                
+                connectBtn.disabled = true;
+                addBootloaderLog('Connecting to bootloader device...', 'info');
+                
+                try {
+                    let result;
+                    if (comEnabled) {
+                        const port = document.getElementById('comPortSelect').value;
+                        const baud = parseInt(document.getElementById('baudRateSelect').value);
+                        if (!port) {
+                            addBootloaderLog('Please select a COM port', 'error');
+                            connectBtn.disabled = false;
+                            return;
+                        }
+                        if (window.electronAPI && window.electronAPI.connectToPort) {
+                            result = await window.electronAPI.connectToPort(port, baud);
+                        }
+                    } else if (usbEnabled) {
+                        const vid = document.getElementById('usbVidInput').value;
+                        const pid = document.getElementById('usbPidInput').value;
+                        if (window.electronAPI && window.electronAPI.connectToBootloaderUSB) {
+                            result = await window.electronAPI.connectToBootloaderUSB(vid, pid);
+                        }
+                    }
+                    
+                    if (result && result.success) {
+                        bootloaderConnected = true;
+                        connectBtn.textContent = 'Disconnect';
+                        setBootloaderButtonState('connected');
+                        addBootloaderLog('Device connected', 'success');
+                        addBootloaderLog('Please load a hex file to continue', 'info');
+                    } else {
+                        addBootloaderLog('Connection failed: ' + (result?.error || 'Unknown error'), 'error');
+                        connectBtn.disabled = false;
+                    }
+                } catch (error) {
+                    addBootloaderLog('Error connecting: ' + error.message, 'error');
+                    connectBtn.disabled = false;
+                }
+            }
+        }
+
+        // Bootloader Version button
+        async function bootloaderVersion() {
+            addBootloaderLog('Reading bootloader version...', 'info');
+            if (window.electronAPI && window.electronAPI.bootloaderReadInfo) {
+                const result = await window.electronAPI.bootloaderReadInfo();
+                if (result && result.success) {
+                    addBootloaderLog(`Bootloader Firmware Version: ${result.majorVersion}.${result.minorVersion}`, 'success');
+                } else {
+                    addBootloaderLog('Failed to read bootloader version: ' + (result?.error || 'Unknown error'), 'error');
+                }
+            }
+        }
+
+        // Load Hex File button
+        async function loadHexFile() {
+            if (!window.electronAPI || !window.electronAPI.showOpenDialog) {
+                addBootloaderLog('File dialog not available', 'error');
+                return;
+            }
+            
+            try {
+                const result = await window.electronAPI.showOpenDialog({
+                    filters: [{ name: 'Hex Files', extensions: ['hex'] }],
+                    properties: ['openFile']
+                });
+                
+                if (!result.canceled && result.filePaths && result.filePaths.length > 0) {
+                    hexFilePath = result.filePaths[0];
+                    document.getElementById('hexFilePathLabel').textContent = hexFilePath;
+                    document.getElementById('hexFilePathLabel').classList.add('has-file');
+                    
+                    if (window.electronAPI && window.electronAPI.loadHexFile) {
+                        const loadResult = await window.electronAPI.loadHexFile(hexFilePath);
+                        if (loadResult && loadResult.success) {
+                            hexFileLoaded = true;
+                            addBootloaderLog('Hex file loaded successfully', 'success');
+                            addBootloaderLog('Click "Erase-Program-Verify" to update firmware', 'info');
+                            setBootloaderButtonState('hex_loaded');
+                        } else {
+                            addBootloaderLog('Hex file loading failed: ' + (loadResult?.error || 'Unknown error'), 'error');
+                        }
+                    }
+                }
+            } catch (error) {
+                addBootloaderLog('Error loading hex file: ' + error.message, 'error');
+            }
+        }
+
+        // Erase Flash button
+        async function eraseFlash() {
+            addBootloaderLog('Starting erase flash...', 'info');
+            enableBootloaderButtons(false);
+            showFirmwareProgress('Erasing Flash...', 0, 'erase');
+            
+            if (window.electronAPI && window.electronAPI.bootloaderEraseFlash) {
+                try {
+                    // Simulate erase progress (erase doesn't report progress, so we animate it)
+                    let eraseProgress = 0;
+                    const eraseInterval = setInterval(() => {
+                        eraseProgress += 5;
+                        if (eraseProgress < 90) {
+                            updateFirmwareProgress('Erasing Flash...', eraseProgress);
+                        }
+                    }, 100);
+                    
+                    const result = await window.electronAPI.bootloaderEraseFlash();
+                    clearInterval(eraseInterval);
+                    
+                    if (result && result.success) {
+                        updateFirmwareProgress('Erase Complete!', 100);
+                        addBootloaderLog('✓ Flash erased successfully', 'success');
+                        // Enable Program button after successful erase
+                        document.getElementById('programBtn').disabled = false;
+                        setTimeout(hideFirmwareProgress, 1500);
+                    } else {
+                        hideFirmwareProgress();
+                        addBootloaderLog('✗ Erase failed: ' + (result?.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    hideFirmwareProgress();
+                    addBootloaderLog('✗ Erase error: ' + error.message, 'error');
+                } finally {
+                    enableBootloaderButtons(true);
+                }
+            }
+        }
+
+        // Program Flash button
+        async function programFlash() {
+            console.log('[ADMIN] programFlash() called');
+            if (!hexFileLoaded) {
+                addBootloaderLog('Please load hex file first', 'error');
+                console.log('[ADMIN] ERROR: hexFileLoaded = false');
+                return;
+            }
+            addBootloaderLog('Starting programming flash...', 'info');
+            console.log('[ADMIN] Calling bootloaderProgramFlash IPC...');
+            enableBootloaderButtons(false);
+            showFirmwareProgress('Programming Flash... 0%', 0, 'program');
+            
+            if (window.electronAPI && window.electronAPI.bootloaderProgramFlash) {
+                try {
+                    console.log('[ADMIN] bootloaderProgramFlash exists, calling it...');
+                    const result = await window.electronAPI.bootloaderProgramFlash();
+                    console.log('[ADMIN] bootloaderProgramFlash result:', result);
+                    if (result && result.success) {
+                        updateFirmwareProgress('Programming Complete!', 100);
+                        addBootloaderLog('✓ Programming completed successfully', 'success');
+                        document.getElementById('verifyBtn').disabled = false;
+                        document.getElementById('runAppBtn').disabled = false;
+                        setTimeout(hideFirmwareProgress, 1500);
+                    } else {
+                        hideFirmwareProgress();
+                        addBootloaderLog('✗ Programming failed: ' + (result?.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    hideFirmwareProgress();
+                    console.error('[ADMIN] Programming error:', error);
+                    addBootloaderLog('✗ Programming error: ' + error.message, 'error');
+                } finally {
+                    enableBootloaderButtons(true);
+                }
+            } else {
+                hideFirmwareProgress();
+                console.error('[ADMIN] ERROR: bootloaderProgramFlash not available in electronAPI');
+                addBootloaderLog('✗ Programming not available - electronAPI error', 'error');
+                enableBootloaderButtons(true);
+            }
+        }
+
+        // Verify Flash button
+        async function verifyFlash() {
+            addBootloaderLog('Starting verification...', 'info');
+            enableBootloaderButtons(false);
+            if (window.electronAPI && window.electronAPI.bootloaderReadCRC) {
+                try {
+                    const result = await window.electronAPI.bootloaderReadCRC();
+                    if (result && result.success) {
+                        if (result.crcMatch) {
+                            addBootloaderLog('✓ Verification successful - CRC matches', 'success');
+                        } else {
+                            addBootloaderLog('✗ Verification failed - CRC mismatch', 'error');
+                        }
+                    } else {
+                        addBootloaderLog('✗ Verification failed: ' + (result?.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    addBootloaderLog('✗ Verification error: ' + error.message, 'error');
+                } finally {
+                    enableBootloaderButtons(true);
+                }
+            }
+        }
+
+        // Erase-Program-Verify button (automated sequence)
+        async function eraseProgramVerify() {
+            if (!hexFileLoaded) {
+                addBootloaderLog('Please load hex file first', 'error');
+                return;
+            }
+            addBootloaderLog('Starting Erase-Program-Verify sequence...', 'info');
+            setBootloaderButtonState('busy'); // All buttons disabled during operation
+            
+            // Do the sequence step by step
+            try {
+                // Step 1: Erase
+                addBootloaderLog('Step 1/3: Erasing flash...', 'info');
+                const eraseResult = await window.electronAPI.bootloaderEraseFlash();
+                if (!eraseResult || !eraseResult.success) {
+                    addBootloaderLog('✗ Erase failed: ' + (eraseResult?.error || 'Unknown error'), 'error');
+                    setBootloaderButtonState('hex_loaded');
+                    return;
+                }
+                addBootloaderLog('✓ Erase completed', 'success');
+                
+                // Step 2: Program
+                addBootloaderLog('Step 2/3: Programming flash...', 'info');
+                const programResult = await window.electronAPI.bootloaderProgramFlash();
+                if (!programResult || !programResult.success) {
+                    addBootloaderLog('✗ Program failed: ' + (programResult?.error || 'Unknown error'), 'error');
+                    setBootloaderButtonState('hex_loaded');
+                    return;
+                }
+                addBootloaderLog('✓ Program completed', 'success');
+                
+                // Step 3: Verify
+                addBootloaderLog('Step 3/3: Verifying flash...', 'info');
+                const verifyResult = await window.electronAPI.bootloaderReadCRC();
+                if (!verifyResult || !verifyResult.success) {
+                    addBootloaderLog('✗ Verify failed: ' + (verifyResult?.error || 'Unknown error'), 'error');
+                    setBootloaderButtonState('hex_loaded');
+                    return;
+                }
+                if (verifyResult.crcMatch) {
+                    addBootloaderLog('✓ Erase-Program-Verify completed successfully', 'success');
+                    addBootloaderLog('Click "Run Application" to start the new firmware', 'info');
+                    setBootloaderButtonState('ready_to_run'); // Enable Run Application button
+                } else {
+                    addBootloaderLog('✗ Verification failed - CRC mismatch', 'error');
+                    setBootloaderButtonState('hex_loaded');
+                }
+            } catch (error) {
+                addBootloaderLog('✗ Sequence error: ' + error.message, 'error');
+                setBootloaderButtonState('hex_loaded');
+            }
+        }
+
+        // Run Application button
+        async function runApplication() {
+            addBootloaderLog('Sending command to jump to application...', 'info');
+            setBootloaderButtonState('busy');
+            if (window.electronAPI && window.electronAPI.bootloaderJumpToApp) {
+                try {
+                    const result = await window.electronAPI.bootloaderJumpToApp();
+                    if (result && result.success) {
+                        addBootloaderLog('✓ Command sent successfully', 'success');
+                        addBootloaderLog('Device should now be running application', 'info');
+                        addBootloaderLog('Note: Bootloader connection will disconnect (this is normal)', 'info');
+                        // Device will disconnect, so update UI
+                        bootloaderConnected = false;
+                        hexFileLoaded = false;
+                        const connectBtn = document.getElementById('connectBtn');
+                        if (connectBtn) {
+                            connectBtn.textContent = 'Connect';
+                        }
+                        setBootloaderButtonState('disconnected');
+                    } else {
+                        addBootloaderLog('✗ Failed to run application: ' + (result?.error || 'Unknown error'), 'error');
+                        setBootloaderButtonState('ready_to_run');
+                    }
+                } catch (error) {
+                    // If device disconnected, that's actually success
+                    if (error.message && (error.message.includes('disconnected') || error.message.includes('Cannot write'))) {
+                        addBootloaderLog('✓ Device jumped to application (disconnected from bootloader)', 'success');
+                        addBootloaderLog('Device should now be running application', 'info');
+                        bootloaderConnected = false;
+                        hexFileLoaded = false;
+                        const connectBtn = document.getElementById('connectBtn');
+                        if (connectBtn) {
+                            connectBtn.textContent = 'Connect';
+                        }
+                        setBootloaderButtonState('disconnected');
+                    } else {
+                        addBootloaderLog('✗ Error running application: ' + error.message, 'error');
+                        setBootloaderButtonState('ready_to_run');
+                    }
+                }
+            }
+        }
+
+
+
+        // Update functions
+        async function checkForUpdates() {
+            const checkBtn = document.getElementById('checkUpdateBtn');
+            const statusDisplay = document.getElementById('updateStatusDisplay');
+            const statusMessage = document.getElementById('updateStatusMessage');
+            const statusContent = document.getElementById('updateStatusContent');
+            const progressSection = document.getElementById('updateProgressSection');
+            
+            // Check if electronAPI is available
+            if (!window.electronAPI || !window.electronAPI.checkForUpdates) {
+                addAdminLog('Update checking not available - electronAPI not ready', 'error');
+                statusDisplay.textContent = 'Error: Update checking not available';
+                return;
+            }
+
+            // Disable button and show checking status
+            checkBtn.disabled = true;
+            statusDisplay.textContent = 'Checking...';
+            statusMessage.style.display = 'block';
+            statusMessage.className = 'update-status-message info';
+            statusContent.textContent = 'Checking for updates...';
+            progressSection.style.display = 'none';
+
+            addAdminLog('Checking for updates...', 'info');
+
+            try {
+                const result = await window.electronAPI.checkForUpdates();
+                
+                if (result.success) {
+                    statusDisplay.textContent = 'Checking for updates...';
+                    addAdminLog('Update check initiated', 'success');
+                } else {
+                    statusDisplay.textContent = 'Error';
+                    statusMessage.className = 'update-status-message error';
+                    statusContent.textContent = result.error || 'Failed to check for updates';
+                    addAdminLog('Failed to check for updates: ' + (result.error || 'Unknown error'), 'error');
+                    checkBtn.disabled = false;
+                }
+            } catch (error) {
+                statusDisplay.textContent = 'Error';
+                statusMessage.className = 'update-status-message error';
+                statusContent.textContent = 'Error: ' + error.message;
+                addAdminLog('Error checking for updates: ' + error.message, 'error');
+                checkBtn.disabled = false;
+            }
+        }
+
+        // Handle update status updates from main process
+        function handleUpdateStatus(updateInfo) {
+            const statusDisplay = document.getElementById('updateStatusDisplay');
+            const statusMessage = document.getElementById('updateStatusMessage');
+            const statusContent = document.getElementById('updateStatusContent');
+            const progressSection = document.getElementById('updateProgressSection');
+            const progressFill = document.getElementById('updateProgressFill');
+            const progressText = document.getElementById('updateProgressText');
+            const checkBtn = document.getElementById('checkUpdateBtn');
+
+            statusMessage.style.display = 'block';
+
+            if (updateInfo.status === 'checking') {
+                statusDisplay.textContent = 'Checking...';
+                statusMessage.className = 'update-status-message info';
+                statusContent.textContent = updateInfo.message || 'Checking for updates...';
+                progressSection.style.display = 'none';
+            } else if (updateInfo.status === 'available') {
+                statusDisplay.textContent = 'Update Available!';
+                statusMessage.className = 'update-status-message success';
+                let message = `New version ${updateInfo.version} is available!\n\n`;
+                if (updateInfo.releaseNotes) {
+                    message += 'Release Notes:\n' + updateInfo.releaseNotes + '\n\n';
+                }
+                message += 'A dialog will appear asking if you want to download the update.';
+                statusContent.textContent = message;
+                progressSection.style.display = 'none';
+                checkBtn.disabled = false;
+                addAdminLog('Update available: Version ' + updateInfo.version, 'success');
+            } else if (updateInfo.status === 'not-available') {
+                statusDisplay.textContent = 'Up to Date';
+                statusMessage.className = 'update-status-message success';
+                statusContent.textContent = updateInfo.message || 'You are using the latest version.';
+                progressSection.style.display = 'none';
+                checkBtn.disabled = false;
+                addAdminLog('No updates available - using latest version', 'info');
+            } else if (updateInfo.status === 'downloading') {
+                statusDisplay.textContent = 'Downloading...';
+                statusMessage.className = 'update-status-message info';
+                statusContent.textContent = updateInfo.message || 'Downloading update...';
+                progressSection.style.display = 'block';
+                
+                if (updateInfo.percent !== undefined) {
+                    progressFill.style.width = updateInfo.percent + '%';
+                    progressText.textContent = updateInfo.percent + '%';
+                }
+            } else if (updateInfo.status === 'downloaded') {
+                statusDisplay.textContent = 'Ready to Install';
+                statusMessage.className = 'update-status-message success';
+                statusContent.textContent = updateInfo.message || 'Update downloaded successfully! A dialog will appear asking if you want to restart and install.';
+                progressFill.style.width = '100%';
+                progressText.textContent = '100%';
+                checkBtn.disabled = false;
+                addAdminLog('Update downloaded successfully', 'success');
+            } else if (updateInfo.status === 'error') {
+                statusDisplay.textContent = 'Error';
+                statusMessage.className = 'update-status-message error';
+                statusContent.textContent = updateInfo.message || 'An error occurred while checking for updates.';
+                progressSection.style.display = 'none';
+                checkBtn.disabled = false;
+                addAdminLog('Update error: ' + updateInfo.message, 'error');
+            }
+        }
+
+        // Load current version on page load
+        async function loadCurrentVersion() {
+            if (window.electronAPI && window.electronAPI.getAppVersion) {
+                try {
+                    const versionInfo = await window.electronAPI.getAppVersion();
+                    const versionDisplay = document.getElementById('currentVersionDisplay');
+                    if (versionDisplay) {
+                        versionDisplay.textContent = versionInfo.version;
+                        if (!versionInfo.isPackaged) {
+                            versionDisplay.textContent += ' (Development Mode)';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error getting app version:', error);
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initAdminPanel();
+            loadCurrentVersion();
+            
+            // Populate COM ports for bootloader
+            async function populateComPorts() {
+                if (window.electronAPI && window.electronAPI.getAvailablePorts) {
+                    try {
+                        const ports = await window.electronAPI.getAvailablePorts();
+                        const comPortSelect = document.getElementById('comPortSelect');
+                        if (comPortSelect) {
+                            comPortSelect.innerHTML = '<option value="">Select Port...</option>';
+                            ports.forEach(port => {
+                                const option = document.createElement('option');
+                                option.value = port.path;
+                                option.textContent = port.path + (port.manufacturer ? ' - ' + port.manufacturer : '');
+                                comPortSelect.appendChild(option);
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error populating COM ports:', error);
+                    }
+                }
+            }
+            populateComPorts();
+            
+            // Set initial button state (disconnected)
+            setBootloaderButtonState('disconnected');
+            
+            // Listen for connection status updates
+            if (window.electronAPI && window.electronAPI.onConnectionStatus) {
+                window.electronAPI.onConnectionStatus(function(event, status) {
+                    // Check if this is a bootloader connection
+                    const isBootloader = status.isBootloader || status.isDFU || false;
+                    const connectBtn = document.getElementById('connectBtn');
+                    
+                    if (status.connected && isBootloader) {
+                        bootloaderConnected = true;
+                        if (connectBtn) {
+                            connectBtn.textContent = 'Disconnect';
+                            connectBtn.disabled = false;
+                        }
+                        setBootloaderButtonState('connected');
+                        addBootloaderLog('Device connected', 'success');
+                        if (status.bootloaderVersion) {
+                            addBootloaderLog(`Bootloader Firmware Version: ${status.bootloaderVersion}`, 'success');
+                        }
+                    } else if (!status.connected && isBootloader) {
+                        bootloaderConnected = false;
+                        hexFileLoaded = false;
+                        if (connectBtn) {
+                            connectBtn.textContent = 'Connect';
+                            connectBtn.disabled = false;
+                        }
+                        setBootloaderButtonState('disconnected');
+                        addBootloaderLog('Device disconnected', 'info');
+                    }
+                });
+            }
+
+            // Listen for update status updates
+            if (window.electronAPI && window.electronAPI.onUpdateStatus) {
+                window.electronAPI.onUpdateStatus(function(event, updateInfo) {
+                    handleUpdateStatus(updateInfo);
+                });
+            }
+            
+            // Listen for bootloader progress updates
+            if (window.electronAPI && window.electronAPI.onBootloaderProgress) {
+                window.electronAPI.onBootloaderProgress(function(data) {
+                    // data: { step: 'erase'|'program'|'verify', progress: 0-100, label: 'description' }
+                    const mode = data.step === 'erase' ? 'erase' : (data.step === 'verify' ? 'verify' : 'program');
+                    showFirmwareProgress(data.label, mode);
+                    updateFirmwareProgress(data.label, data.progress);
+                    
+                    // Auto-hide progress bar after completion
+                    if (data.progress >= 100 && (data.step === 'verify' || data.label.includes('completed'))) {
+                        setTimeout(function() {
+                            hideFirmwareProgress();
+                        }, 3000); // Hide after 3 seconds
+                    }
+                });
+            }
+            
+            // Check if URL hash indicates bootloader tab
+            if (window.location.hash === '#bootloader') {
+                // Wait a moment for everything to load, then switch to bootloader tab
+                setTimeout(function() {
+                    switchTab('bootloader', document.querySelector('.tab-button:last-child'));
+                }, 100);
+            }
+            
+            // Handle Proportional input change
+            const proportionalInput = document.getElementById('proportionalInput');
+            if (proportionalInput) {
+                proportionalInput.addEventListener('change', async function() {
+                    const value = this.value.trim();
+                    if (value !== lastProportionalValue && value !== '') {
+                        lastProportionalValue = value;
+                        updatePIDStatus('proportional', false, 'Sending...');
+                        const success = await sendPIDValue('P', value);
+                        updatePIDStatus('proportional', success, success ? 'Sent successfully' : 'Failed to send');
+                    }
+                });
+            }
+
+            // Handle Integral input change
+            const integralInput = document.getElementById('integralInput');
+            if (integralInput) {
+                integralInput.addEventListener('change', async function() {
+                    const value = this.value.trim();
+                    if (value !== lastIntegralValue && value !== '') {
+                        lastIntegralValue = value;
+                        updatePIDStatus('integral', false, 'Sending...');
+                        const success = await sendPIDValue('I', value);
+                        updatePIDStatus('integral', success, success ? 'Sent successfully' : 'Failed to send');
+                    }
+                });
+            }
+
+            // Handle Differential input change
+            const differentialInput = document.getElementById('differentialInput');
+            if (differentialInput) {
+                differentialInput.addEventListener('change', async function() {
+                    const value = this.value.trim();
+                    if (value !== lastDifferentialValue && value !== '') {
+                        lastDifferentialValue = value;
+                        updatePIDStatus('differential', false, 'Sending...');
+                        const success = await sendPIDValue('D', value);
+                        updatePIDStatus('differential', success, success ? 'Sent successfully' : 'Failed to send');
+                    }
+                });
+            }
+        });
+    </script>
+    
+</body>
+</html>
