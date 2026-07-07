@@ -25,8 +25,8 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^38.2.2",
-    "electron-builder": "^25.1.8",
+    "electron": "^40.10.6",
+    "electron-builder": "^26.15.3",
     "jimp": "^1.6.0",
     "nodemon": "^3.1.10",
     "to-ico": "^1.0.1"
