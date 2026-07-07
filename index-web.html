@@ -34,19 +34,48 @@
                 background: var(--panel, #333); 
                 border-bottom: 2px solid var(--border, #444); 
             }
-            .header-matrix { 
-                height: 8vh; 
-                width: auto; 
-                max-width: 20vw; 
-                object-fit: contain; 
+            .header-matrix {
+                height: 8vh;
+                width: auto;
+                max-width: 20vw;
+                object-fit: contain;
             }
-            .header-heat-transfer { 
-                height: 8vh; 
-                width: auto; 
-                max-width: 60vw; 
-                object-fit: contain; 
-                flex: 1; 
+            .header-heat-transfer {
+                height: 8vh;
+                width: auto;
+                max-width: 60vw;
+                object-fit: contain;
+                flex: 1;
             }
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+            .header-time {
+                font-family: 'Courier New', monospace;
+                font-size: clamp(12px, 1.6vh, 18px);
+                font-weight: 700;
+                color: #fff;
+                background: rgba(255,255,255,0.12);
+                border: 1px solid rgba(255,255,255,0.25);
+                border-radius: 6px;
+                padding: 4px 12px;
+                letter-spacing: 2px;
+                white-space: nowrap;
+            }
+            .theme-select {
+                background: rgba(255,255,255,0.12);
+                border: 1px solid rgba(255,255,255,0.25);
+                border-radius: 6px;
+                color: #fff;
+                padding: 4px 8px;
+                font-size: clamp(11px, 1.4vh, 15px);
+                cursor: pointer;
+                outline: none;
+            }
+            .theme-select option { background: #333; color: #fff; }
             .system-status-indicator {
                 text-align: center;
                 font-weight: bold;
@@ -418,24 +447,60 @@
                 min-height: 90px; 
             }
             .data-log { max-height: 300px; overflow-y: auto; }
-            .tiles { 
-                display: grid; 
-                grid-template-columns: repeat(auto-fill, minmax(15vw, 1fr)); 
-                gap: 1vh; 
-                margin-top: 1vh; 
+            .sensor-grid {
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+                gap: 8px;
+                margin-top: 10px;
             }
-            .tile { 
-                background: #ffffff; 
-                border: 1px solid #e6e6e6; 
-                border-left-width: 6px; 
-                border-radius: 8px; 
-                padding: 12px; 
-                box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
-                font-weight: bold; 
+            .metrics-row {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+                margin-top: 8px;
             }
-            #t1{ border-left-color: #ff4d4f;} #t2{ border-left-color: #40a9ff;} #t3{ border-left-color: #73d13d;} #t4{ border-left-color: #fa8c16;} #t5{ border-left-color: #b37feb;} #t6{ border-left-color: #36cfc9;} #t7{ border-left-color: #f759ab;} #t8{ border-left-color: #9254de;} #heaterLeft{ border-left-color: #faad14;} #heaterRight{ border-left-color: #1f7a8c;} #timeTile{ border-left-color: #1e90ff;}
-            .tile.accent { background: #fff7e6; border-color: #ffd591; }
-            .tile.subtle { background: #f6f7fb; border-color: #e6e8f0; font-weight: normal; }
+            .tile {
+                background: #ffffff;
+                border: 1px solid #dde1ea;
+                border-top-width: 3px;
+                border-radius: 8px;
+                padding: 10px 12px 8px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+                color: #1a1a2e;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                min-width: 0;
+            }
+            .tile-label {
+                font-size: 0.68em;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                color: #777;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .tile-value {
+                font-size: 1.05em;
+                font-weight: 700;
+                color: #1a1a2e;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            #t1{ border-top-color: #ff4d4f;} #t2{ border-top-color: #40a9ff;} #t3{ border-top-color: #73d13d;} #t4{ border-top-color: #fa8c16;} #t5{ border-top-color: #b37feb;} #t6{ border-top-color: #36cfc9;} #t7{ border-top-color: #f759ab;} #t8{ border-top-color: #9254de;} #heaterLeft{ border-top-color: #faad14;} #heaterRight{ border-top-color: #1f7a8c;} #airSpeedTile{ border-top-color: #52c41a;} #timeTile{ border-top-color: #1e90ff;} #powerTile{ border-top-color: #fa541c;}
+            .tile.accent { background: #fffdf5; }
+            .tile.subtle { background: #f6f7fb; }
+            @media (max-width: 900px) {
+                .sensor-grid { grid-template-columns: repeat(4, 1fr); }
+                .metrics-row { grid-template-columns: repeat(3, 1fr); }
+            }
+            @media (max-width: 480px) {
+                .sensor-grid { grid-template-columns: repeat(2, 1fr); }
+                .metrics-row { grid-template-columns: repeat(2, 1fr); }
+            }
             .graph-section { 
                 margin-top: 2vh; 
                 background: var(--panel, #575656); 
@@ -541,6 +606,13 @@
             <div class="header-container">
                 <img src="assets/Matrix 2024 White_Thermodynamics.png" alt="Matrix Thermodynamics" class="header-matrix">
                 <img src="assets/Heat_Transfer.png" alt="Heat Transfer Header" class="header-heat-transfer">
+                <div class="header-right">
+                    <div id="headerTime" class="header-time">00:00:00</div>
+                    <select id="themeToggle" class="theme-select">
+                        <option value="dark">🌙 Dark</option>
+                        <option value="light">☀️ Light</option>
+                    </select>
+                </div>
             </div>
             <div id="systemStatusIndicator" class="system-status-indicator offline">SYSTEM OFFLINE</div>
             <!-- Connection Panel -->
@@ -605,19 +677,19 @@
                     </div>
                 </div>
 
-                <div class="tiles">
-                    <div class="tile" id="t1">T1: --.-°C</div>
-                    <div class="tile" id="t2">T2: --.-°C</div>
-                    <div class="tile" id="t3">T3: --.-°C</div>
-                    <div class="tile" id="t4">T4: --.-°C</div>
-                    <div class="tile" id="t5">T5: --.-°C</div>
-                    <div class="tile" id="t6">T6: --.-°C</div>
-                    <div class="tile" id="t7">T7: --.-°C</div>
-                    <div class="tile" id="t8">T8: --.-°C</div>
-                    <div class="tile accent" id="heaterLeft">Radial Heater: --.-°C</div>
-                    <div class="tile accent" id="heaterRight">Linear Heater: --.-°C</div>
-                    <div class="tile subtle" id="timeTile">Time: --.-s</div>
-                    <div class="tile" id="powerTile">Power: --.- W</div>
+                <div class="sensor-grid">
+                    <div class="tile" id="t1"><div class="tile-label">T1</div><div class="tile-value" id="t1-val">--.-°C</div></div>
+                    <div class="tile" id="t2"><div class="tile-label">T2</div><div class="tile-value" id="t2-val">--.-°C</div></div>
+                    <div class="tile" id="t3"><div class="tile-label">T3</div><div class="tile-value" id="t3-val">--.-°C</div></div>
+                    <div class="tile" id="t4"><div class="tile-label">T4</div><div class="tile-value" id="t4-val">--.-°C</div></div>
+                    <div class="tile" id="t5"><div class="tile-label">T5</div><div class="tile-value" id="t5-val">--.-°C</div></div>
+                    <div class="tile" id="t6"><div class="tile-label">T6</div><div class="tile-value" id="t6-val">--.-°C</div></div>
+                    <div class="tile" id="t7"><div class="tile-label">T7</div><div class="tile-value" id="t7-val">--.-°C</div></div>
+                    <div class="tile" id="t8"><div class="tile-label">T8</div><div class="tile-value" id="t8-val">--.-°C</div></div>
+                </div>
+                <div class="metrics-row" style="grid-template-columns: repeat(2, minmax(0, 220px));">
+                    <div class="tile accent" id="heaterLeft"><div class="tile-label">Radial Heater</div><div class="tile-value" id="heaterLeft-val">--.-°C</div></div>
+                    <div class="tile accent" id="heaterRight"><div class="tile-label">Linear Heater</div><div class="tile-value" id="heaterRight-val">--.-°C</div></div>
                 </div>
 
                 <div class="graph-section">

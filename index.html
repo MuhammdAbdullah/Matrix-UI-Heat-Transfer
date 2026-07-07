@@ -137,9 +137,9 @@
                 min-width: 104px;
                 height: 48px;
                 padding: 0 16px;
-                border: 1px solid oklch(var(--b3));
+                border: 1px solid oklch(var(--b3) / 0.5);
                 border-radius: 6px;
-                background: oklch(var(--b1));
+                background: transparent;
                 color: oklch(var(--bc));
                 font-size: 1.15rem;
                 font-weight: 700;
@@ -406,7 +406,7 @@
                             <div class="bg-base-200 border border-base-300 rounded-lg p-5">
                                 <p class="rp-section-title mb-4">Received Data</p>
                                 <!-- T1–T8 compact inline row -->
-                                <div class="flex flex-wrap gap-x-8 gap-y-4 mb-4">
+                                <div class="flex justify-between gap-y-4 mb-4">
                                     <div id="t1" class="rd-field">
                                         <span class="rd-label">T1</span>
                                         <span class="tile-val">-- °C</span>
@@ -450,15 +450,15 @@
                                         <span class="rd-label">Radial Heater</span>
                                         <span class="tile-val">-- °C</span>
                                     </div>
-                                    <div id="airSpeedTile" class="rd-field">
+                                    <div id="airSpeedTile" class="rd-field" style="display:none;">
                                         <span class="rd-label">Air Speed</span>
                                         <span class="tile-val">-- m/s</span>
                                     </div>
-                                    <div id="timeTile" class="rd-field">
+                                    <div id="timeTile" class="rd-field" style="display:none;">
                                         <span class="rd-label">Time</span>
                                         <span class="tile-val">-- s</span>
                                     </div>
-                                    <div id="powerTile" class="rd-field">
+                                    <div id="powerTile" class="rd-field" style="display:none;">
                                         <span class="rd-label">Power</span>
                                         <span class="tile-val">-- W</span>
                                     </div>

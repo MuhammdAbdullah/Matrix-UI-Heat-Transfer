@@ -8,6 +8,9 @@ This is the web version of the Heat Transfer Data Reader, designed to work on An
 - **Progressive Web App (PWA)**: Can be installed on Android devices
 - **Touch-Friendly**: Optimized for touch interactions
 - **All Original Features**: Fan control, heater control, data visualization, and more
+- **Dark / Light Theme**: Toggle between dark and light mode; preference is saved in localStorage
+- **Session Timer**: Live HH:MM:SS clock in the header that starts on connect and resets on disconnect
+- **Redesigned Sensor Tiles**: 8-column sensor grid with split label/value layout and per-sensor accent colours
 
 ## How to Use on Android Tablet
 
@@ -51,6 +54,23 @@ To access from your Android tablet:
 
 3. **Access from tablet:** `http://YOUR_IP:3000`
 
+## UI Overview
+
+### Header
+- **Matrix / Heat Transfer logos** on the left
+- **Session timer** (HH:MM:SS) — counts up from zero while connected, resets on disconnect
+- **Theme toggle** (🌙 Dark / ☀️ Light) — persisted across page reloads via `localStorage`
+
+### Sensor Grid
+Eight temperature sensor tiles (T1–T8) displayed in an 8-column grid, each showing a colour-coded top border, label, and live value. Below the sensor grid two heater tiles (Radial / Linear) are shown side-by-side.
+
+Responsive breakpoints:
+| Viewport | Sensor columns | Metric columns |
+|---|---|---|
+| ≥ 900 px | 8 | 5 |
+| 480–900 px | 4 | 3 |
+| < 480 px | 2 | 2 |
+
 ## Features for Mobile
 
 - **Touch-optimized sliders**: Larger touch targets
@@ -60,17 +80,10 @@ To access from your Android tablet:
 
 ## Differences from Electron Version
 
-- **No Serial Port Access**: Currently uses mock data (can be extended with Web Serial API)
+- **No Serial Port Access**: Uses the Express `/connect`, `/disconnect`, `/data`, `/ports` API endpoints
 - **Web-based**: Runs in browser instead of desktop app
 - **Network Access**: Requires network connection between devices
 - **Touch Interface**: Optimized for touch instead of mouse
-
-## Future Enhancements
-
-- **Web Serial API**: For direct serial port access in supported browsers
-- **Real-time Data**: WebSocket connection for live data streaming
-- **Offline Mode**: Service worker for offline functionality
-- **Push Notifications**: For alerts and status updates
 
 ## Troubleshooting
 
@@ -91,32 +104,9 @@ To access from your Android tablet:
 
 ## Technical Details
 
-- **Backend**: Express.js server
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Backend**: Express.js server (`server.js`)
+- **Frontend**: `index-web.html`, `renderer-web.js`
 - **PWA**: Service Worker, Web App Manifest
-- **Responsive**: CSS Grid, Flexbox, Media Queries
-- **Touch**: Touch events, larger touch targets
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- **Responsive**: CSS Grid, Flexbox, viewport-relative units, media queries
+- **Theme**: CSS custom properties (`--bg`, `--text`, `--panel`, `--border`) toggled at runtime
+- **Timer**: `setInterval`-based session counter, syncs to hardware elapsed time when available

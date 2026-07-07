@@ -4,6 +4,62 @@
 let isConnected = false;
 let packetCount = 0;
 
+// Session timer
+let sessionSeconds = 0;
+let timerInterval = null;
+
+function formatTime(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function updateHeaderTime(timeStr) {
+    const el = document.getElementById('headerTime');
+    if (el) el.textContent = timeStr;
+}
+
+function startSessionTimer() {
+    if (timerInterval) return;
+    sessionSeconds = 0;
+    timerInterval = setInterval(function() {
+        sessionSeconds++;
+        updateHeaderTime(formatTime(sessionSeconds));
+    }, 1000);
+}
+
+function stopSessionTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    sessionSeconds = 0;
+    updateHeaderTime('00:00:00');
+}
+
+// Called by data handler when elapsed time arrives from hardware packet
+function syncElapsedTime(timeStr) {
+    updateHeaderTime(timeStr);
+}
+
+// Theme toggle
+function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'light') {
+        root.style.setProperty('--bg', '#f0f2f5');
+        root.style.setProperty('--text', '#1a1a2e');
+        root.style.setProperty('--panel', '#ffffff');
+        root.style.setProperty('--border', '#dde1ea');
+        document.body.style.background = '#f0f2f5';
+        document.body.style.color = '#1a1a2e';
+    } else {
+        root.style.setProperty('--bg', '#000000');
+        root.style.setProperty('--text', '#ffffff');
+        root.style.setProperty('--panel', '#333');
+        root.style.setProperty('--border', '#444');
+        document.body.style.background = '#000000';
+        document.body.style.color = '#ffffff';
+    }
+}
+
 // Get references to HTML elements
 const comPortSelect = document.getElementById('comPort');
 const connectBtn = document.getElementById('connectBtn');
@@ -172,6 +228,7 @@ async function connectToPortHandler() {
         if (result.success) {
             addToLog('Successfully connected to ' + selectedPort);
             updateConnectionStatus(true, selectedPort + ' @ 9600 baud');
+            startSessionTimer();
         } else {
             addToLog('Failed to connect: ' + result.error);
             updateConnectionStatus(false);
@@ -192,6 +249,7 @@ async function disconnectFromPortHandler() {
             addToLog('Error disconnecting: ' + result.error);
         }
         updateConnectionStatus(false);
+        stopSessionTimer();
     } catch (error) {
         addToLog('Disconnect error: ' + error.message);
         updateConnectionStatus(false);
@@ -368,6 +426,17 @@ document.addEventListener('DOMContentLoaded', function() {
     addToLog('Heat Transfer Web App started');
     addToLog('Click "Refresh Ports" to see available COM ports');
     refreshComPorts();
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('change', function() {
+            applyTheme(this.value);
+            localStorage.setItem('webTheme', this.value);
+        });
+        const saved = localStorage.getItem('webTheme') || 'dark';
+        themeToggle.value = saved;
+        applyTheme(saved);
+    }
 });
 
 
