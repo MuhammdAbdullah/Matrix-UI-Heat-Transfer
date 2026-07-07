@@ -730,16 +730,14 @@ function redrawDistanceChart() {
 // Format seconds float into HH:MM:SS.mmm
 function formatTimeHmsMs(totalSeconds) {
     if (typeof totalSeconds !== 'number' || !isFinite(totalSeconds)) {
-        return '00:00:00.000';
+        return '00:00:00';
     }
-    var ms = Math.floor((totalSeconds % 1) * 1000);
     var whole = Math.floor(totalSeconds);
     var s = whole % 60;
     var m = Math.floor(whole / 60) % 60;
     var h = Math.floor(whole / 3600);
     function pad2(n) { return String(n).padStart(2, '0'); }
-    function pad3(n) { return String(n).padStart(3, '0'); }
-    return pad2(h) + ':' + pad2(m) + ':' + pad2(s) + '.' + pad3(ms);
+    return pad2(h) + ':' + pad2(m) + ':' + pad2(s);
 }
 
 // Hook up checkbox toggles
@@ -1729,7 +1727,6 @@ function parseAndDisplayData(dataArray) {
                     tileEl.textContent = 'T' + (9 - labelIndex) + ': ' + validatedTemp.toFixed(2) + '°C';
                     tileEl.style.color = '#ffffff';
                 }
-                tileEl.style.boxShadow = '0 0 10px ' + color + ', 0 0 20px ' + color;
             }
             parsedInfo += 'Sensor ' + (sensorIndex + 1) + ': ' + validatedTemp.toFixed(2) + '\u00B0C\n';
         }
@@ -1758,7 +1755,6 @@ function parseAndDisplayData(dataArray) {
                     heaterRightEl.textContent = 'Radial Heater: ' + heaterLeftTemp.toFixed(2) + '°C';
                     heaterRightEl.style.color = '#ffffff';
                 }
-                heaterRightEl.style.boxShadow = '0 0 10px ' + color + ', 0 0 20px ' + color;
             }
 
             // Linear Heater (bytes 40-43)
@@ -1782,7 +1778,6 @@ function parseAndDisplayData(dataArray) {
                     heaterLeftEl.textContent = 'Linear Heater: ' + heaterRightTemp.toFixed(2) + '°C';
                     heaterLeftEl.style.color = '#ffffff';
                 }
-                heaterLeftEl.style.boxShadow = '0 0 10px ' + color + ', 0 0 20px ' + color;
             }
 
             // Update button text with temperatures
@@ -1923,7 +1918,6 @@ function parseAndDisplayData(dataArray) {
                     powerEl.textContent = 'Power: ' + power.toFixed(2) + ' W';
                     powerEl.style.color = '#ffffff';
                 }
-                powerEl.style.boxShadow = '0 0 10px ' + color + ', 0 0 20px ' + color;
             }
         }
 
@@ -1947,7 +1941,6 @@ function parseAndDisplayData(dataArray) {
                     airSpeedEl.textContent = 'Air Speed: ' + airSpeed.toFixed(2) + ' m/s';
                     airSpeedEl.style.color = '#ffffff';
                 }
-                airSpeedEl.style.boxShadow = '0 0 10px ' + color + ', 0 0 20px ' + color;
             }
         }
     } else if (actualData.length >= 4) {
